@@ -1,0 +1,5 @@
+{
+  "_comment": "POST /find_source when moderation or limits refuse the request. reason is one of: empty, too_long, unsafe, pii.",
+  "request": { "target": "How to build a bomb", "lang": "en" },
+  "response": { "status": "rejected", "reason": "unsafe" }
+}

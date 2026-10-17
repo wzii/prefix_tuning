@@ -1,0 +1,51 @@
+{
+  "_comment": "POST /find_source when the hidden prompt templates make the model write exactly the requested output. The prompt itself is never returned. Every source ends with a single space (last_token), so the output starts without a leading space. Token ids here are illustrative, not real Qwen3 ids.",
+  "request": {
+    "target": "Pineapple on pizza is a crime.",
+    "lang": "en"
+  },
+  "response": {
+    "status": "matched",
+    "search_id": "s_7f3a9c21d4e0",
+    "target_tokens": [
+      {
+        "id": 41236,
+        "text": "Pine"
+      },
+      {
+        "id": 23067,
+        "text": "apple"
+      },
+      {
+        "id": 389,
+        "text": " on"
+      },
+      {
+        "id": 22502,
+        "text": " pizza"
+      },
+      {
+        "id": 374,
+        "text": " is"
+      },
+      {
+        "id": 264,
+        "text": " a"
+      },
+      {
+        "id": 9778,
+        "text": " crime"
+      },
+      {
+        "id": 13,
+        "text": "."
+      }
+    ],
+    "k": 8,
+    "last_token": {
+      "id": 220,
+      "text": " "
+    },
+    "templates_tried": 2
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "_comment": "POST /find_source when no hidden template reproduces the request. found_tokens is the best attempt (greedy continuation of the best template, cut to the requested length); first_diff is the index of the first token that differs. The page asks the user whether to continue with found_tokens or to write a source themselves. Every source ends with a single space (last_token), so the output starts without a leading space. Token ids here are illustrative, not real Qwen3 ids.",
+  "request": {
+    "target": "My code has no bugs, only surprise features.",
+    "lang": "en"
+  },
+  "response": {
+    "status": "mismatch",
+    "search_id": "s_b81e04f6a2c9",
+    "target_tokens": [
+      {
+        "id": 3017,
+        "text": "My"
+      },
+      {
+        "id": 2038,
+        "text": " code"
+      },
+      {
+        "id": 702,
+        "text": " has"
+      },
+      {
+        "id": 902,
+        "text": " no"
+      },
+      {
+        "id": 22551,
+        "text": " bugs"
+      },
+      {
+        "id": 11,
+        "text": ","
+      },
+      {
+        "id": 1172,
+        "text": " only"
+      },
+      {
+        "id": 12761,
+        "text": " surprise"
+      },
+      {
+        "id": 4419,
+        "text": " features"
+      },
+      {
+        "id": 13,
+        "text": "."
+      }
+    ],
+    "found_tokens": [
+      {
+        "id": 3017,
+        "text": "My"
+      },
+      {
+        "id": 2038,
+        "text": " code"
+      },
+      {
+        "id": 702,
+        "text": " has"
+      },
+      {
+        "id": 902,
+        "text": " no"
+      },
+      {
+        "id": 22551,
+        "text": " bugs"
+      },
+      {
+        "id": 11,
+        "text": ","
+      },
+      {
+        "id": 1172,
+        "text": " only"
+      },
+      {
+        "id": 1045,
+        "text": " some"
+      },
+      {
+        "id": 16500,
+        "text": " unexpected"
+      },
+      {
+        "id": 7709,
+        "text": " behavior"
+      }
+    ],
+    "first_diff": 7,
+    "k": 10,
+    "last_token": {
+      "id": 220,
+      "text": " "
+    },
+    "templates_tried": 6
+  }
+}

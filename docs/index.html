@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers · Attention Matching</title>
+    <meta name="description" content="Attention matching: a training-free, closed-form construction of a prefix (prefix-tuning) that makes a pretrained Transformer such as GPT-2 or Qwen3-4B generate any output sequence it can already produce. NeurIPS 2026 paper, code, and an interactive demo." />
+    <meta name="keywords" content="prefix tuning, prefix-tuning, attention matching, parameter-efficient fine-tuning, PEFT, expressiveness of prefix-tuning, prompt tuning, key-value prefix, controllable generation, Transformer, large language model, LLM, GPT-2, Qwen3, NeurIPS 2026" />
+    <meta name="author" content="Peter Cho-Ho Lam, Ziyi Wang, Zirui Zhou" />
+    <link rel="canonical" href="https://wzii.github.io/prefix_tuning/" />
+
+    <!-- link previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Attention Matching" />
+    <meta property="og:title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
+    <meta property="og:description" content="A training-free prefix that makes a pretrained Transformer say any sentence it can produce, whatever the user types. NeurIPS 2026 · code · interactive demo on Qwen3-4B." />
+    <meta property="og:url" content="https://wzii.github.io/prefix_tuning/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
+    <meta name="twitter:description" content="A training-free prefix that makes a pretrained Transformer say any sentence it can produce. NeurIPS 2026 · code · demo." />
+
+    <!-- Google Scholar -->
+    <meta name="citation_title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
+    <meta name="citation_author" content="Lam, Peter Cho-Ho" />
+    <meta name="citation_author_institution" content="Huawei Technologies Canada" />
+    <meta name="citation_author" content="Wang, Ziyi" />
+    <meta name="citation_author_institution" content="Huawei Technologies Canada" />
+    <meta name="citation_author" content="Zhou, Zirui" />
+    <meta name="citation_author_institution" content="Huawei Technologies Canada" />
+    <meta name="citation_publication_date" content="2026" />
+    <meta name="citation_conference_title" content="Advances in Neural Information Processing Systems" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ScholarlyArticle",
+        "headline": "Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers",
+        "name": "Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers",
+        "alternativeHeadline": "Attention Matching",
+        "description": "A training-free, closed-form construction of a prefix that makes a pretrained Transformer generate any output sequence it can already produce, for any input of the same length that ends with the same token.",
+        "keywords": ["prefix tuning", "attention matching", "parameter-efficient fine-tuning", "PEFT", "Transformer", "large language model", "GPT-2", "Qwen3"],
+        "author": [
+          { "@type": "Person", "name": "Peter Cho-Ho Lam", "url": "https://github.com/peter-chl", "affiliation": { "@type": "Organization", "name": "Huawei Technologies Canada" } },
+          { "@type": "Person", "name": "Ziyi Wang", "url": "https://github.com/wzii", "affiliation": { "@type": "Organization", "name": "Huawei Technologies Canada" } },
+          { "@type": "Person", "name": "Zirui Zhou", "url": "https://github.com/ZiruiZhou", "affiliation": { "@type": "Organization", "name": "Huawei Technologies Canada" } }
+        ],
+        "datePublished": "2026",
+        "isPartOf": { "@type": "PublicationEvent", "name": "NeurIPS 2026" },
+        "url": "https://wzii.github.io/prefix_tuning/",
+        "codeRepository": "https://github.com/wzii/prefix_tuning",
+        "isAccessibleForFree": true
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-in">
+        <a class="brand" href="#top">Attention Matching</a>
+        <nav class="topnav" aria-label="Sections">
+          <a href="#top" class="is-here" data-i18n="nav.overview"></a>
+          <a href="#demo" class="nav-demo"><span class="dot" aria-hidden="true"></span><span data-i18n="nav.demo"></span></a>
+          <a href="#method" data-i18n="nav.method"></a>
+          <a href="#results" data-i18n="nav.results"></a>
+          <a href="#limits" data-i18n="nav.limits"></a>
+          <a href="#cite" data-i18n="nav.cite"></a>
+        </nav>
+        <div class="topbar-end">
+          <a href="https://github.com/wzii/prefix_tuning" data-i18n="hdr.code"></a>
+          <button type="button" class="lang" id="lang" data-i18n="lang.switch"></button>
+        </div>
+      </div>
+    </header>
+
+    <section class="intro narrow" id="top">
+      <div class="paper-head">
+        <h1 data-i18n="paper.title"></h1>
+        <p class="authors">
+          <a href="https://github.com/peter-chl">Peter Cho-Ho Lam</a><sup>1</sup>,
+          <a href="https://github.com/wzii">Ziyi Wang</a><sup>1</sup>,
+          <a href="https://github.com/ZiruiZhou">Zirui Zhou</a><sup>1</sup>
+        </p>
+        <p class="affil"><sup>1</sup>Huawei Technologies Canada</p>
+        <p class="venue" data-i18n="paper.venue"></p>
+      </div>
+      <p class="lead" data-i18n="hero.analogy"></p>
+      <p class="lead" data-i18n="hero.what"></p>
+      <p class="lead" data-i18n="hero.do"></p>
+      <p class="lead" data-i18n="hero.expert"></p>
+      <p class="links">
+        <a class="btn btn-demo" href="#demo" data-i18n="nav.tryDemo"></a>
+        <!-- placeholder until the PDF exists: see PAPER_PDF in src/main.ts -->
+        <a class="btn" id="paper-link" href="#" data-i18n="paper.pdf"></a>
+        <a class="btn" href="https://github.com/wzii/prefix_tuning" data-i18n="hdr.code"></a>
+      </p>
+      <p class="footnote" id="hero-note" data-i18n="hero.note"></p>
+    </section>
+
+    <section class="viz" id="demo" aria-labelledby="demo-h">
+      <div class="viz-in">
+        <div class="viz-head">
+          <h2 id="demo-h" data-i18n="demo.h"></h2>
+        </div>
+
+        <div class="lab">
+          <div class="lab-grid">
+            <section class="pane hack" aria-labelledby="make-h">
+              <header class="pane-h"><span class="pane-n">1</span><h3 id="make-h" data-i18n="make.h"></h3></header>
+              <p class="pane-p" data-i18n="make.p"></p>
+              <div class="tabs" role="tablist">
+                <button type="button" role="tab" id="tab-examples" data-i18n="make.tabEx"></button>
+                <button type="button" role="tab" id="tab-custom" data-i18n="make.tabCustom"></button>
+              </div>
+
+              <div id="mode-examples" class="mode">
+                <div class="ex-list" id="ex-list"></div>
+              </div>
+
+              <div id="mode-custom" class="mode" hidden>
+                <div class="field">
+                  <label for="want" data-i18n="make.want"></label>
+                  <textarea id="want" rows="2" maxlength="200" spellcheck="false"></textarea>
+                  <p class="hint" id="want-hint"></p>
+                </div>
+                <div class="row">
+                  <button type="button" class="act" id="find" data-i18n="make.find"></button>
+                </div>
+                <div class="decide" id="decide" hidden>
+                  <p class="decide-t" data-i18n="make.missT"></p>
+                  <div class="decide-rows">
+                    <span class="decide-lab" data-i18n="make.asked"></span><p class="decide-text" id="asked-text"></p>
+                    <span class="decide-lab" data-i18n="make.found"></span><p class="decide-text is-found" id="found-text"></p>
+                  </div>
+                  <div class="row">
+                    <button type="button" class="act" id="accept" data-i18n="make.accept"></button>
+                    <button type="button" class="ghost" id="manual" data-i18n="make.manual"></button>
+                  </div>
+                  <p class="hint why" data-i18n-html="make.why"></p>
+                </div>
+                <button type="button" class="link small" id="to-manual" data-i18n="make.toManual"></button>
+              </div>
+
+              <div id="mode-manual" class="mode" hidden>
+                <p class="hint" data-i18n="make.manualP"></p>
+                <p class="hint why" data-i18n-html="make.why"></p>
+                <div class="field">
+                  <label for="src" data-i18n="ctl.src"></label>
+                  <input id="src" type="text" spellcheck="false" autocomplete="off" />
+                </div>
+                <div class="row">
+                  <div class="field f-k">
+                    <label for="k" data-i18n="ctl.k"></label>
+                    <select id="k"></select>
+                  </div>
+                  <button type="button" class="act" id="compute" data-i18n="make.btn"></button>
+                  <button type="button" class="link" id="back-custom" data-i18n="make.back"></button>
+                </div>
+              </div>
+
+              <p class="ready" id="make-y"></p>
+              <div class="card-slot" id="made-card"></div>
+              <div class="card-actions" id="made-actions" hidden>
+                <button type="button" class="ghost" id="use" data-i18n="make.use"></button>
+                <button type="button" class="ghost" id="dl" data-i18n="make.dl"></button>
+                <span class="hint" data-i18n="make.drag"></span>
+              </div>
+              <p class="status" id="left-status" aria-live="polite"></p>
+            </section>
+
+            <div class="lab-arrow" aria-hidden="true"><span>→</span></div>
+
+            <section class="pane chat-pane" aria-labelledby="chat-h">
+              <header class="pane-h">
+                <span class="pane-n">2</span><h3 id="chat-h" data-i18n="chat.h"></h3>
+                <button type="button" class="demo" id="demo-badge" aria-expanded="false" aria-controls="demo-tip"></button>
+              </header>
+              <p class="note demo-tip" id="demo-tip" hidden></p>
+              <div class="drop" id="drop">
+                <div class="drop-empty" id="drop-empty">
+                  <span data-i18n="chat.drop"></span>
+                  <label class="upload"><span data-i18n="run.upload"></span><input type="file" id="file" accept=".safetensors,.zip" /></label>
+                </div>
+                <div id="loaded-card"></div>
+              </div>
+              <div class="chat-log" id="chat-log" aria-live="polite"></div>
+              <div class="chips" id="chips"></div>
+              <form class="chat-input" id="chat-form">
+                <input id="usr" type="text" spellcheck="false" autocomplete="off" />
+                <button type="submit" class="act" id="run" data-i18n="chat.send"></button>
+              </form>
+              <p class="hint" id="term"></p>
+              <p class="status" id="right-status" aria-live="polite"></p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="method narrow" id="motivation">
+      <h2 data-i18n="mot.h"></h2>
+      <div data-i18n="mot.p"></div>
+    </section>
+
+    <article class="method narrow" id="method">
+      <h2 data-i18n="method.h"></h2>
+      <p class="sub" data-i18n="intro.sub"></p>
+      <p data-i18n="m.intro"></p>
+
+      <h3 data-i18n="m.pt.h"></h3>
+      <div data-i18n="m.pt"></div>
+      <p data-i18n="m.rough"></p>
+
+      <aside class="theorem" id="theorem">
+        <p class="theorem-h" data-i18n="m.thm.h"></p>
+        <div data-i18n="m.thm"></div>
+      </aside>
+      <figure class="fig" id="fig-overview">
+        <div class="fig-svg" id="intro-fig"></div>
+        <figcaption data-i18n="fig.cap"></figcaption>
+      </figure>
+
+      <h3 id="attention-matching" data-i18n="m.am.h"></h3>
+      <p data-i18n-html="m.am0"></p>
+      <div data-i18n="m.am1"></div>
+      <div data-i18n="m.am2"></div>
+      <figure class="fig" id="fig-mech">
+        <div class="fig-svg" id="mech-fig"></div>
+        <figcaption data-i18n="mech.cap"></figcaption>
+      </figure>
+      <div data-i18n="m.am3"></div>
+      <figure class="fig" id="fig-svr">
+        <div class="svr" id="svr"></div>
+        <figcaption id="svr-cap"></figcaption>
+      </figure>
+      <p data-i18n-html="m.rem1"></p>
+      <p data-i18n-html="m.rem2"></p>
+
+      <h3 id="qk-norm" data-i18n="m.qk.h"></h3>
+      <div data-i18n="m.qk"></div>
+
+      <h3 id="repeats" data-i18n="m.gqa.h"></h3>
+      <div data-i18n="m.gqa"></div>
+
+      <h3 id="why-source" data-i18n="method.why.h"></h3>
+      <div data-i18n="method.why"></div>
+
+      <!-- "Watching it work" removed from the page; kept hidden so the scripts that drive it still find their elements -->
+      <h3 id="watch" data-i18n="m.watch.h" hidden></h3>
+      <div data-i18n="m.watch" hidden></div>
+    </article>
+
+    <div class="watch" hidden>
+      <div class="stage">
+        <div class="stage-bar">
+          <div class="seg" role="group">
+            <button type="button" id="mode-off" data-i18n="mode.off"></button>
+            <button type="button" id="mode-on" data-i18n="mode.on"></button>
+          </div>
+          <div class="stepper">
+            <span data-i18n="nav.layer"></span>
+            <button type="button" id="layer-prev" data-i18n-aria="aria.layerPrev">‹</button>
+            <output id="layer-val"></output>
+            <button type="button" id="layer-next" data-i18n-aria="aria.layerNext">›</button>
+          </div>
+          <div class="stepper">
+            <span data-i18n="nav.head"></span>
+            <button type="button" id="head-prev" data-i18n-aria="aria.headPrev">‹</button>
+            <output id="head-val"></output>
+            <button type="button" id="head-next" data-i18n-aria="aria.headNext">›</button>
+          </div>
+          <div class="stepper stepper-r">
+            <span id="r-label" data-i18n="nav.r"></span>
+            <button type="button" id="r-prev" data-i18n-aria="aria.rPrev">‹</button>
+            <output id="r-val" aria-labelledby="r-label"></output>
+            <button type="button" id="r-next" data-i18n-aria="aria.rNext">›</button>
+          </div>
+        </div>
+        <p class="note" id="canvas-empty" data-i18n="m.watch.empty"></p>
+        <div class="canvas" id="canvas"></div>
+        <p class="caption" id="caption" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <section class="results-sec narrow" id="results">
+      <h2 data-i18n="results.h"></h2>
+      <p data-i18n="intro.p2"></p>
+      <figure class="fig">
+        <div class="table-wrap">
+          <table class="results">
+            <thead>
+              <tr><th data-i18n="res.model"></th><th data-i18n="res.attn"></th><th class="num">k = 1</th><th class="num">k = 5</th><th class="num">k = 10</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>GPT-2</td><td data-i18n="res.gpt2"></td><td class="num">98.2%</td><td class="num">91.4%</td><td class="num">79.3%</td></tr>
+              <tr class="is-demo"><td>Qwen3-4B</td><td data-i18n="res.qwen"></td><td class="num">100%</td><td class="num">100%</td><td class="num">100%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figcaption data-i18n="res.note"></figcaption>
+      </figure>
+      <div data-i18n="res.cond"></div>
+    </section>
+
+    <section class="results-sec narrow" id="limits">
+      <h2 data-i18n="nav.limits"></h2>
+      <ol class="limits">
+        <li data-i18n="lim.1"></li>
+        <li data-i18n="lim.2"></li>
+        <li data-i18n="lim.3"></li>
+        <li data-i18n="lim.5"></li>
+      </ol>
+    </section>
+
+    <section class="results-sec narrow" id="cite">
+      <h2 data-i18n="nav.cite"></h2>
+      <p data-i18n="cite.p"></p>
+      <div class="bibtex">
+        <pre id="bibtex"></pre>
+        <button type="button" class="bibtex-copy" id="bibtex-copy" data-i18n="cite.copy"></button>
+      </div>
+    </section>
+
+    <footer class="foot narrow"><p data-i18n-html="foot"></p></footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
