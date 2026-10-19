@@ -19,6 +19,9 @@
   --neg: #3a62b3;
   --pos: #c24a38;
   --focus: #2f6fd6;
+  --step: #2257a6;
+  --cta: #9b2c2c;
+  --cta-soft: #f6dddc;
   --f-body: 'IBM Plex Sans', 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   --f-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, 'Noto Sans SC', monospace;
   color-scheme: light;
@@ -45,6 +48,9 @@
     --neg: #6e97ea;
     --pos: #f07e6a;
     --focus: #7aa7ff;
+    --step: #8ab4ff;
+    --cta: #b23b3b;
+    --cta-soft: #3d1c1c;
     color-scheme: dark;
   }
 }
@@ -69,6 +75,9 @@
   --neg: #6e97ea;
   --pos: #f07e6a;
   --focus: #7aa7ff;
+  --step: #8ab4ff;
+  --cta: #b23b3b;
+  --cta-soft: #3d1c1c;
   color-scheme: dark;
 }
 
@@ -872,6 +881,15 @@ html {
 .step.pane {
   padding: 22px 24px;
 }
+/* the three step headings stand out in blue */
+.step > .pane-h h3 {
+  color: var(--step);
+}
+/* the two actions of the demo: compute the prefix, send the prompt */
+.act.cta {
+  background: var(--cta);
+  color: #fff;
+}
 @media (max-width: 560px) {
   .step.pane {
     padding: 18px 16px;
@@ -953,7 +971,7 @@ html {
 }
 @keyframes invite {
   50% {
-    box-shadow: 0 0 0 6px var(--prefix-soft), 0 0 0 7px var(--prefix);
+    box-shadow: 0 0 0 6px var(--cta-soft), 0 0 0 7px var(--cta);
   }
 }
 .an {
