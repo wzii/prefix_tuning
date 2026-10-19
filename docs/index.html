@@ -108,62 +108,64 @@
         </div>
 
         <div class="steps">
-          <section class="step pane hack" aria-labelledby="make-h">
+          <section class="step pane" aria-labelledby="make-h">
             <header class="pane-h"><h3 id="make-h" data-i18n="make.h"></h3></header>
             <p class="pane-p" data-i18n="make.p"></p>
-            <div class="tabs" role="tablist">
-              <button type="button" role="tab" id="tab-examples" data-i18n="make.tabEx"></button>
-              <button type="button" role="tab" id="tab-custom" data-i18n="make.tabCustom"></button>
-            </div>
-
-            <div id="mode-examples" class="mode">
-              <div class="ex-list" id="ex-list"></div>
-            </div>
-
-            <div id="mode-custom" class="mode" hidden>
-              <div class="field">
-                <label for="want" data-i18n="make.want"></label>
-                <textarea id="want" rows="2" maxlength="200" spellcheck="false"></textarea>
+            <div class="term hack">
+              <div class="tabs" role="tablist">
+                <button type="button" role="tab" id="tab-examples" data-i18n="make.tabEx"></button>
+                <button type="button" role="tab" id="tab-custom" data-i18n="make.tabCustom"></button>
               </div>
-              <div class="row">
-                <button type="button" class="act" id="find" data-i18n="make.find"></button>
+
+              <div id="mode-examples" class="mode">
+                <div class="ex-list" id="ex-list"></div>
               </div>
-              <div class="decide" id="decide" hidden>
-                <p class="decide-t" data-i18n="make.missT"></p>
-                <div class="decide-rows">
-                  <span class="decide-lab" data-i18n="make.asked"></span><p class="decide-text" id="asked-text"></p>
-                  <span class="decide-lab" data-i18n="make.found"></span><p class="decide-text is-found" id="found-text"></p>
+
+              <div id="mode-custom" class="mode" hidden>
+                <div class="field">
+                  <label for="want" data-i18n="make.want"></label>
+                  <textarea id="want" rows="2" maxlength="200" spellcheck="false"></textarea>
                 </div>
                 <div class="row">
-                  <button type="button" class="act" id="accept" data-i18n="make.accept"></button>
-                  <button type="button" class="ghost" id="manual" data-i18n="make.manual"></button>
+                  <button type="button" class="act" id="find" data-i18n="make.find"></button>
                 </div>
+                <div class="decide" id="decide" hidden>
+                  <p class="decide-t" data-i18n="make.missT"></p>
+                  <div class="decide-rows">
+                    <span class="decide-lab" data-i18n="make.asked"></span><p class="decide-text" id="asked-text"></p>
+                    <span class="decide-lab" data-i18n="make.found"></span><p class="decide-text is-found" id="found-text"></p>
+                  </div>
+                  <div class="row">
+                    <button type="button" class="act" id="accept" data-i18n="make.accept"></button>
+                    <button type="button" class="ghost" id="manual" data-i18n="make.manual"></button>
+                  </div>
+                  <p class="hint why" data-i18n-html="make.why"></p>
+                </div>
+                <button type="button" class="link small" id="to-manual" data-i18n="make.toManual"></button>
+              </div>
+
+              <div id="mode-manual" class="mode" hidden>
+                <p class="hint" data-i18n="make.manualP"></p>
                 <p class="hint why" data-i18n-html="make.why"></p>
-              </div>
-              <button type="button" class="link small" id="to-manual" data-i18n="make.toManual"></button>
-            </div>
-
-            <div id="mode-manual" class="mode" hidden>
-              <p class="hint" data-i18n="make.manualP"></p>
-              <p class="hint why" data-i18n-html="make.why"></p>
-              <div class="row">
-                <div class="field f-src">
-                  <label for="src" data-i18n="ctl.src"></label>
-                  <input id="src" type="text" spellcheck="false" autocomplete="off" />
+                <div class="row">
+                  <div class="field f-src">
+                    <label for="src" data-i18n="ctl.src"></label>
+                    <input id="src" type="text" spellcheck="false" autocomplete="off" />
+                  </div>
+                  <div class="field f-k">
+                    <label for="k" data-i18n="ctl.k"></label>
+                    <select id="k"></select>
+                  </div>
+                  <button type="button" class="link" id="back-custom" data-i18n="make.back"></button>
                 </div>
-                <div class="field f-k">
-                  <label for="k" data-i18n="ctl.k"></label>
-                  <select id="k"></select>
-                </div>
-                <button type="button" class="link" id="back-custom" data-i18n="make.back"></button>
               </div>
-            </div>
 
-            <p class="ready" id="make-y"></p>
-            <p class="status" id="left-status" aria-live="polite"></p>
+              <p class="ready" id="make-y"></p>
+              <p class="status" id="left-status" aria-live="polite"></p>
+            </div>
           </section>
 
-          <div class="step-arrow" aria-hidden="true"><span>↓</span></div>
+          <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 28" class="arrow-svg"><path d="M12 2v22M4 16l8 9 8-9"/></svg></div>
 
           <section class="step pane solve-pane" aria-labelledby="solve-h">
             <header class="pane-h"><h3 id="solve-h" data-i18n="solve.h"></h3></header>
@@ -173,7 +175,7 @@
                 <button type="button" class="act act-big" id="compute"></button>
                 <div class="an" id="anim"></div>
               </div>
-              <div class="solve-arrow" aria-hidden="true"><span>→</span></div>
+              <div class="solve-arrow" aria-hidden="true"><svg viewBox="0 0 24 28" class="arrow-svg"><path d="M12 2v22M4 16l8 9 8-9"/></svg></div>
               <div class="solve-right">
                 <div class="fslot" id="fslot"></div>
                 <div class="card-actions" id="file-actions" hidden>
@@ -181,16 +183,12 @@
                   <button type="button" class="ghost" id="dl" data-i18n="make.dl"></button>
                 </div>
                 <div class="insp" id="inspect" hidden></div>
-                <p class="hint up-line">
-                  <span data-i18n="file.have"></span>
-                  <label class="upload"><span data-i18n="run.upload"></span><input type="file" id="file" accept=".safetensors,.zip" /></label>
-                </p>
               </div>
             </div>
             <p class="status" id="solve-status" aria-live="polite"></p>
           </section>
 
-          <div class="step-arrow" aria-hidden="true"><span>↓</span></div>
+          <div class="step-arrow" aria-hidden="true"><svg viewBox="0 0 24 28" class="arrow-svg"><path d="M12 2v22M4 16l8 9 8-9"/></svg></div>
 
           <section class="step pane chat-pane" aria-labelledby="chat-h">
             <header class="pane-h">
@@ -198,18 +196,34 @@
               <button type="button" class="demo" id="demo-badge" aria-expanded="false" aria-controls="demo-tip"></button>
             </header>
             <p class="note demo-tip" id="demo-tip" hidden></p>
-            <form class="chat-input" id="chat-form">
-              <input id="usr" type="text" spellcheck="false" autocomplete="off" />
-              <button type="submit" class="act" id="run" data-i18n="chat.send"></button>
-            </form>
-            <div class="chips" id="chips"></div>
+            <div class="prompt-grid">
+              <label class="p-lab" for="usr" data-i18n="chat.yourPrompt"></label>
+              <form class="chat-input" id="chat-form">
+                <input id="usr" type="text" spellcheck="false" autocomplete="off" />
+                <button type="submit" class="act" id="run" data-i18n="chat.send"></button>
+              </form>
+              <span class="p-lab" data-i18n="chat.examples"></span>
+              <div class="chips" id="chips"></div>
+            </div>
             <div class="duo">
               <div class="win win-plain">
                 <div class="win-h" id="win-plain-h"></div>
                 <div class="chat-log" id="log-plain" aria-live="polite"></div>
               </div>
               <div class="win win-hacked">
-                <div class="win-h" id="win-hacked-h"></div>
+                <div class="win-h">
+                  <div id="win-hacked-h"></div>
+                  <div class="win-pfx" id="win-pfx">
+                    <div id="pfx-card"></div>
+                    <div class="pfx-empty" id="pfx-empty">
+                      <span data-i18n="pfx.none"></span>
+                      <span class="pfx-acts">
+                        <button type="button" class="link small" id="use-made" data-i18n="pfx.useMade"></button>
+                        <label class="upload"><span data-i18n="run.upload"></span><input type="file" id="file" accept=".safetensors,.zip" /></label>
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 <div class="chat-log" id="log-hacked" aria-live="polite"></div>
               </div>
             </div>

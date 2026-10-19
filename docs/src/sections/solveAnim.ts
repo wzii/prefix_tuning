@@ -1,5 +1,5 @@
 import type { LayerDetail, Matrix, SolveResult, Token } from '../api/types';
-import { t } from '../i18n';
+import { t, type Key } from '../i18n';
 import { rich } from '../lib/math';
 import { fmt } from '../viz/heatmap';
 import { color, css, mix, onThemeChange } from '../viz/theme';
@@ -169,7 +169,7 @@ export async function play(box: HTMLElement, d: AnimData, alive: () => boolean, 
       cells[l * d.nKv + h] = c;
       grid.append(c);
     }
-  const count = el('p', 'an-count');
+  const count = el('ul', 'an-count');
   s3.append(grid, count);
   box.append(s1, s2, s3);
 
@@ -228,7 +228,13 @@ export async function play(box: HTMLElement, d: AnimData, alive: () => boolean, 
   }
   const [mant, ex] = solve.summary.residMax.toExponential(1).split('e');
   const res = `$${mant}\\times 10^{${Number(ex)}}$`;
-  count.innerHTML = rich(t('an.count', { n: total, L: d.nLayers, H: d.nKv, ms: Math.round(solve.timing.totalMs), cond: fmt(solve.summary.condMax), res }));
+  const facts: [Key, Record<string, string | number>][] = [
+    ['an.c.n', { n: total, L: d.nLayers, H: d.nKv }],
+    ['an.c.ms', { ms: Math.round(solve.timing.totalMs).toLocaleString() }],
+    ['an.c.cond', { cond: fmt(solve.summary.condMax) }],
+    ['an.c.res', { res }],
+  ];
+  count.replaceChildren(...facts.map(([key, params]) => el('li', '', rich(t(key, params)))));
   box.classList.remove('is-playing');
   box.classList.add('is-done');
 

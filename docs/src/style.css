@@ -854,12 +854,20 @@ html {
 .step-arrow {
   display: grid;
   place-items: center;
-  height: 30px;
+  height: 52px;
   background: var(--band);
   border-block: 1px solid var(--line);
   color: var(--prefix);
-  font-size: 18px;
-  line-height: 1;
+}
+.arrow-svg {
+  display: block;
+  width: 26px;
+  height: 32px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .step.pane {
   padding: 22px 24px;
@@ -873,8 +881,8 @@ html {
 /* step 2: the button and the solve on the left, the file on the right */
 .solve-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) 40px minmax(0, 1fr);
-  align-items: start;
+  grid-template-columns: minmax(0, 1.3fr) 52px minmax(0, 1fr);
+  align-items: stretch;
 }
 .solve-left,
 .solve-right {
@@ -883,22 +891,55 @@ html {
   align-content: start;
   min-width: 0;
 }
+/* the file card sits at the height of the arrow: the middle of the row */
+.solve-right {
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-content: stretch;
+}
+.solve-right > .fslot {
+  grid-row: 2;
+}
+.solve-right > .card-actions {
+  grid-row: 3;
+  align-self: start;
+}
 .solve-arrow {
   display: grid;
   place-items: center;
-  align-self: stretch;
   color: var(--prefix);
-  font-size: 22px;
+}
+.solve-arrow .arrow-svg {
+  transform: rotate(-90deg);
+}
+/* with the file open, everything starts at the top, and so does the arrow */
+.solve-grid.is-inspecting .solve-right {
+  grid-template-rows: none;
+}
+.solve-grid.is-inspecting .solve-right > * {
+  grid-row: auto;
+}
+.solve-grid.is-inspecting .solve-arrow {
+  align-items: start;
+  padding-top: 46px;
 }
 @media (max-width: 860px) {
   .solve-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .solve-arrow {
-    height: 34px;
+  .solve-right {
+    grid-template-rows: none;
   }
-  .solve-arrow span {
-    transform: rotate(90deg);
+  .solve-right > * {
+    grid-row: auto !important;
+  }
+  .solve-arrow {
+    height: 48px;
+  }
+  .solve-arrow .arrow-svg {
+    transform: none;
+  }
+  .solve-grid.is-inspecting .solve-arrow {
+    padding-top: 0;
   }
 }
 .act-big {
@@ -1011,6 +1052,9 @@ html {
   color: var(--muted);
 }
 .an-count {
+  display: grid;
+  gap: 3px;
+  padding-left: 1.2em;
   color: var(--ink);
 }
 .an-idle {
@@ -1052,13 +1096,20 @@ html {
   background: var(--prefix-soft);
   color: var(--prefix-ink);
 }
-.up-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 13px;
+.term {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 8px;
+}
+#make-y {
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.ready-y {
+  color: var(--prefix);
 }
 
 /* step 2: what is inside the file */
@@ -1171,6 +1222,24 @@ html {
 }
 
 /* step 3: one input, two chat windows */
+.prompt-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 14px;
+  align-items: center;
+}
+.p-lab {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .prompt-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+}
 .duo {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1228,25 +1297,87 @@ html {
 .win-hacked .win-sub {
   color: var(--prefix-ink);
 }
-.win-file {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  overflow: hidden;
-  font: 11.5px var(--f-mono);
-  color: var(--prefix-ink);
-  white-space: nowrap;
+.win-h {
+  display: grid;
+  gap: 8px;
 }
-.win-file .hammer {
+.win-pfx {
+  font-size: 12.5px;
+}
+.pfx-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 4px 4px 8px;
+  border: 1px solid var(--prefix);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.pfx-icon {
   flex: none;
   width: 16px;
 }
-@media (max-width: 560px) {
-  .win-file {
-    display: none;
-  }
+.pfx-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 12px var(--f-mono);
+  color: var(--ink);
+}
+.pfx-from {
+  flex: none;
+  color: var(--muted);
+}
+.pfx-x {
+  flex: none;
+  margin-left: auto;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.pfx-x:hover,
+.pfx-x:focus-visible {
+  color: var(--ink);
+  background: rgba(127, 127, 127, 0.15);
+}
+.pfx-empty {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+}
+.pfx-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+.pfx-acts .link.small {
+  color: var(--focus);
+}
+#pfx-card.flash .pfx-chip {
+  animation: land 0.6s ease-out;
+}
+/* an empty right window looks like the left one; a dragged file lights it up */
+.win-hacked.is-empty {
+  border-color: var(--line);
+}
+.win-hacked.is-empty .win-h {
+  background: var(--surface);
+  border-bottom-color: var(--line);
+}
+.win-hacked.is-empty .win-sub {
+  color: var(--muted);
+}
+.win-hacked.is-over {
+  border-color: var(--prefix);
+  box-shadow: 0 0 0 3px var(--prefix-soft);
 }
 .win .chat-log {
   height: 300px;
@@ -2070,8 +2201,8 @@ button.demo {
 .h-handle { fill: var(--prefix-ink); opacity: 0.75; }
 .h-collar { fill: var(--prefix-ink); }
 
-/* ---------------- box 1: a hacker's terminal, kept quiet: dark, with green only for accents */
-.pane.hack {
+/* ---------------- step 1's box: a hacker's terminal, kept quiet: dark, with green only for accents */
+.hack {
   --bg: #161b19;
   --surface: #1c2320;
   --band: #181e1b;
@@ -2086,23 +2217,6 @@ button.demo {
   --bad: #f87171;
   color: var(--ink);
   background: #111614;
-}
-.hack .pane-h h3 {
-  font-family: var(--f-mono);
-  font-size: 1.05rem;
-}
-.hack .pane-h h3::before {
-  content: '$ ';
-  color: var(--prefix);
-}
-.hack .pane-h h3::after {
-  content: '_';
-  margin-left: 1px;
-  color: var(--prefix);
-  animation: blink 1.2s steps(1) infinite;
-}
-@keyframes blink {
-  50% { opacity: 0; }
 }
 .hack .ex {
   font-family: var(--f-mono);

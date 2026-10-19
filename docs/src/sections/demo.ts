@@ -118,7 +118,7 @@ export function mountDemo(store: Store) {
   const inspector = new Inspector(inspBox);
   let turn: Turn | null = null;
   let runCtl: AbortController | null = null;
-  /** whether the prefix in use came from the user's own file */
+  /** whether the prefix in step 3 came from the user's own file */
   let fromUpload = false;
   /** the last finished animation, replayed at once when the language changes */
   let lastAnim: AnimData | null = null;
@@ -141,9 +141,13 @@ export function mountDemo(store: Store) {
     solveSeq++;
     lastAnim = null;
     closeInspector();
-    clearChats();
-    fromUpload = false;
-    store.set({ picked: p, solving: false, solve: undefined, made: undefined, loaded: undefined, gen: undefined, solveMsg: undefined, solveErr: false });
+    // a prefix the user loaded in step 3 stays; the one computed for the old target goes
+    const keep = fromUpload ? store.s.loaded : undefined;
+    if (!keep) {
+      clearChats();
+      fromUpload = false;
+    }
+    store.set({ picked: p, solving: false, solve: undefined, made: undefined, solveMsg: undefined, solveErr: false, ...(keep ? {} : { loaded: undefined, gen: undefined }) });
   }
 
   /** Ask the server for a hidden prompt after which the model writes `text`. */
@@ -186,9 +190,7 @@ export function mountDemo(store: Store) {
     if (!p) return store.set({ solveMsg: { key: 'solve.need' }, solveErr: true });
     const my = ++solveSeq;
     closeInspector();
-    clearChats();
-    fromUpload = false;
-    store.set({ solving: true, solve: undefined, made: undefined, loaded: undefined, gen: undefined, solveMsg: undefined, solveErr: false });
+    store.set({ solving: true, solve: undefined, made: undefined, solveMsg: undefined, solveErr: false });
     try {
       const api = s.backend.api;
       const solve = await (p.kind === 'search' ? api.solveSearch(p.searchId) : api.solve(withLast(p.source), p.k));
@@ -199,6 +201,8 @@ export function mountDemo(store: Store) {
       await play(animBox, lastAnim, () => my === solveSeq);
       if (my !== solveSeq) return;
       store.set({ solving: false, solve, made });
+      flash($('fslot'));
+      // by default the new prefix goes straight into step 3
       load(made, false);
       // an example comes with a suggested message
       const preset = PRESETS.find((x) => x.id === store.s.presetId);
@@ -247,21 +251,30 @@ export function mountDemo(store: Store) {
     }
   }
 
-  /** Put a prefix to use in step 3. */
+  const flash = (el: HTMLElement) => {
+    el.classList.remove('flash');
+    void el.offsetWidth;
+    el.classList.add('flash');
+  };
+
+  /** Put a prefix into step 3's right window. */
   function load(info: PrefixInfo, upload: boolean, blob?: Blob) {
     fromUpload = upload;
-    closeInspector();
     clearChats();
     store.set({ loaded: info, rightMsg: undefined, rightErr: false });
     keepCopy(info, blob);
-    const slot = $('fslot');
-    slot.classList.remove('flash');
-    void slot.offsetWidth;
-    slot.classList.add('flash');
+    flash($('pfx-card'));
+  }
+
+  /** Empty the right window: it then answers like the left one. */
+  function unload() {
+    fromUpload = false;
+    clearChats();
+    store.set({ loaded: undefined, gen: undefined, rightMsg: undefined, rightErr: false });
   }
 
   async function upload(file: File) {
-    store.set({ solveMsg: { key: 'st.uploading' }, solveErr: false });
+    store.set({ rightMsg: { key: 'st.uploading' }, rightErr: false });
     try {
       let blob: Blob = file;
       let name = file.name;
@@ -272,15 +285,15 @@ export function mountDemo(store: Store) {
         name = inner.name;
       }
       const info = await store.s.backend.api.uploadPrefix(blob, name);
-      store.set({ solveMsg: undefined });
+      store.set({ rightMsg: undefined });
       load(info, true, blob);
     } catch (err) {
-      store.set({ solveMsg: errorMsg(err), solveErr: true });
+      store.set({ rightMsg: errorMsg(err), rightErr: true });
     }
   }
 
   async function download() {
-    const f = store.s.loaded;
+    const f = store.s.made;
     if (!f) return;
     try {
       const blob = await copyOf(f);
@@ -310,15 +323,17 @@ export function mountDemo(store: Store) {
 
   function closeInspector() {
     inspBox.hidden = true;
+    inspBox.closest('.solve-grid')!.classList.remove('is-inspecting');
     inspBtn.setAttribute('aria-expanded', 'false');
     inspBtn.textContent = t('insp.open');
     inspector.reset();
   }
   function toggleInspector() {
-    const f = store.s.loaded;
+    const f = store.s.made;
     if (!f) return;
     if (!inspBox.hidden) return closeInspector();
     inspBox.hidden = false;
+    inspBox.closest('.solve-grid')!.classList.add('is-inspecting');
     inspBtn.setAttribute('aria-expanded', 'true');
     inspBtn.textContent = t('insp.close');
     void inspector.open(f, () => copyOf(f), store.s.view.layer);
@@ -357,11 +372,10 @@ export function mountDemo(store: Store) {
 
   function renderEmpty() {
     if (turn) return;
-    const key: Key = store.s.loaded ? 'chat.empty' : 'chat.needPrefix';
     for (const log of [logPlain, logHacked]) {
       const p = document.createElement('p');
       p.className = 'chat-empty';
-      p.textContent = t(key);
+      p.textContent = t('chat.empty');
       log.replaceChildren(p);
     }
   }
@@ -384,13 +398,36 @@ export function mountDemo(store: Store) {
   const joined = (toks: { text: string }[]) => toks.map((x) => x.text).join('').trim();
 
   /**
-   * Run both models on `text`. With `silent` (the r stepper in the Method section), the last
-   * exchange is re-run in place, so the chat always shows what the current r produces. A newer
-   * run cancels an older one.
+   * The server runs the model only together with a prefix, and every run also returns the plain
+   * reply. An empty right window shows that plain reply, from a run with the prefix of step 2,
+   * or else an example's prefix, which the server keeps.
+   */
+  let carrierP: Promise<PrefixInfo> | null = null;
+  function carrier(): Promise<PrefixInfo> {
+    const s = store.s;
+    if (s.made) return Promise.resolve(s.made);
+    if (!carrierP) {
+      const ex = PRESETS.find((x) => x.lang === 'en')!;
+      const api = s.backend.api;
+      carrierP = (async () => {
+        const f = await api.findSource(ex.output, 'en');
+        if (f.status === 'rejected') throw new ApiError('other', f.reason);
+        return api.prefixInfo((await api.solveSearch(f.searchId)).prefixId);
+      })();
+      carrierP.catch(() => (carrierP = null));
+    }
+    return carrierP;
+  }
+
+  /**
+   * Run both windows on `text`: the left one always without a prefix, the right one with its
+   * prefix if it has one. With `silent` (the r stepper in the Method section), the last exchange
+   * is re-run in place, so the chat always shows what the current r produces. A newer run cancels
+   * an older one.
    */
   async function generate(text: string, silent = false) {
     const s = store.s;
-    if (!s.loaded) return store.set({ rightMsg: { key: 'run.need' }, rightErr: true });
+    const withP = s.loaded;
     let tu: Turn | null = turn;
     if (silent) {
       if (!tu) return;
@@ -399,38 +436,44 @@ export function mountDemo(store: Store) {
       // no history: each model sees only this message, so the previous exchange is cleared
       const shown = text.replace(/\s+$/, '');
       const a = row('ok');
-      const b = row('broken');
+      const b = row(withP ? 'broken' : 'ok');
       logPlain.replaceChildren(row('me', shown).r, a.r);
       logHacked.replaceChildren(row('me', shown).r, b.r);
       tu = turn = { text, plain: '', hacked: '', done: false, plainBubble: a.b, hackedBubble: b.b, meta: b.meta };
     }
     runCtl?.abort();
     const ctl = (runCtl = new AbortController());
-    const loaded = s.loaded;
     store.set({ running: true, rightMsg: undefined, rightErr: false });
     try {
-      const gen = await withPrefix(loaded, () => s.backend.api.generate(
-        { prefixId: loaded.prefixId, userInput: text, r: store.s.r, autoFix: false, signal: ctl.signal },
+      const run = withP ?? (await carrier());
+      if (ctl.signal.aborted) return;
+      const gen = await withPrefix(run, () => s.backend.api.generate(
+        { prefixId: run.prefixId, userInput: text, r: store.s.r, autoFix: false, signal: ctl.signal },
         (e) => {
           if (ctl.signal.aborted || !tu) return;
           if (e.type === 'queued' && e.position > 0) store.set({ rightMsg: { key: 'st.queue', params: { n: e.position } } });
           if (e.type === 'token') {
-            if (e.mode === 'baseline') tu.plain += e.token.text;
-            else tu.hacked += e.token.text;
+            if (e.mode === 'baseline') {
+              tu.plain += e.token.text;
+              if (!withP) tu.hacked = tu.plain;
+            } else if (withP) tu.hacked += e.token.text;
             renderTurn(tu);
           }
         },
       ));
       if (ctl.signal.aborted) return;
-      const exp = loaded.expected.length ? loaded.expected : gen.targetTokens;
-      tu.hit = joined(gen.prefixedTokens) === joined(exp);
       // the final text comes from the whole run, so a character split across tokens is intact
       tu.plain = gen.baselineTokens.map((x) => x.text).join('');
-      tu.hacked = gen.prefixedTokens.map((x) => x.text).join('');
+      if (withP) {
+        const exp = withP.expected.length ? withP.expected : gen.targetTokens;
+        tu.hit = joined(gen.prefixedTokens) === joined(exp);
+        tu.hacked = gen.prefixedTokens.map((x) => x.text).join('');
+      } else tu.hacked = tu.plain;
       tu.done = true;
       renderTurn(tu);
-      store.set({ running: false, ...(silent ? {} : { view: { ...store.s.view, mode: 'prefixed', row: null } }) });
-      store.set({ gen, userInput: text });
+      store.set({ running: false, ...(silent || !withP ? {} : { view: { ...store.s.view, mode: 'prefixed', row: null } }) });
+      // the Method section looks inside runs with a prefix only
+      if (withP) store.set({ gen, userInput: text });
     } catch (err) {
       if (ctl.signal.aborted) return;
       store.set({ running: false, rightMsg: errorMsg(err), rightErr: true });
@@ -444,7 +487,6 @@ export function mountDemo(store: Store) {
   function send() {
     const v = usr.value;
     if (!v.trim() || store.s.running) return;
-    if (!store.s.loaded) return store.set({ rightMsg: { key: 'run.need' }, rightErr: true });
     void generate(sent(v));
   }
 
@@ -490,6 +532,27 @@ export function mountDemo(store: Store) {
     const f = fileIn.files?.[0];
     if (f) void upload(f);
     fileIn.value = '';
+  });
+  $('use-made').addEventListener('click', () => store.s.made && load(store.s.made, false));
+
+  // a prefix file can also be dropped onto the right window
+  const win = logHacked.closest('.win') as HTMLElement;
+  const hasFile = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
+  win.addEventListener('dragover', (e) => {
+    if (!hasFile(e)) return;
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'copy';
+    win.classList.add('is-over');
+  });
+  win.addEventListener('dragleave', (e) => {
+    if (!win.contains(e.relatedTarget as Node)) win.classList.remove('is-over');
+  });
+  win.addEventListener('drop', (e) => {
+    win.classList.remove('is-over');
+    const f = e.dataTransfer?.files?.[0];
+    if (!f) return;
+    e.preventDefault();
+    void upload(f);
   });
 
   $('chat-form').addEventListener('submit', (e) => {
@@ -571,11 +634,12 @@ export function mountDemo(store: Store) {
 
     const y = $('make-y');
     const p = s.pending ? undefined : s.picked;
-    y.textContent = !p
-      ? ''
-      : p.kind === 'search'
-        ? t('make.ready', { y: fit(p.tokens.map((x) => x.text).join('').trim(), 640, 14) })
-        : t('make.readyManual', { k: p.k });
+    if (p?.kind === 'search') {
+      const b = document.createElement('span');
+      b.className = 'ready-y';
+      b.textContent = `“${p.tokens.map((x) => x.text).join('').trim()}”`;
+      y.replaceChildren(t('make.ready'), b);
+    } else y.textContent = p ? t('make.readyManual', { k: p.k }) : '';
     msg($('left-status'), s.leftMsg, s.leftErr);
   }
 
@@ -587,9 +651,9 @@ export function mountDemo(store: Store) {
     btn.disabled = s.solving || s.finding || !!s.made || !s.picked || s.backend.status === 'offline';
     btn.classList.toggle('pulse', !btn.disabled);
 
-    const f = s.loaded;
+    const f = s.made;
     const slot = $('fslot');
-    if (f) slot.replaceChildren(prefixCard(f, fromUpload ? t('run.loadedFrom') : undefined));
+    if (f) slot.replaceChildren(prefixCard(f));
     else {
       const p = document.createElement('p');
       p.className = 'fslot-empty' + (s.solving ? ' is-busy' : '');
@@ -603,7 +667,7 @@ export function mountDemo(store: Store) {
 
   function renderStep3() {
     const s = store.s;
-    const head = (who: 'ok' | 'broken') => {
+    const head = (who: 'ok' | 'broken', right = false) => {
       const h = document.createElement('div');
       h.className = 'win-who';
       const av = document.createElement('span');
@@ -614,25 +678,46 @@ export function mountDemo(store: Store) {
       name.textContent = t('chat.ok');
       const sub = document.createElement('span');
       sub.className = 'win-sub';
-      sub.textContent = t(who === 'ok' ? 'win.plain' : 'win.hacked');
+      sub.textContent = t(who === 'ok' ? (right ? 'win.none' : 'win.plain') : 'win.hacked');
       const txt = document.createElement('span');
       txt.className = 'win-txt';
       txt.append(name, sub);
       h.append(av, txt);
-      if (who === 'broken' && s.loaded) {
-        const file = document.createElement('span');
-        file.className = 'win-file';
-        file.innerHTML = HAMMER;
-        file.append(s.loaded.fileName);
-        file.title = s.loaded.fileName;
-        h.append(file);
-      }
       return h;
     };
     $('win-plain-h').replaceChildren(head('ok'));
-    $('win-hacked-h').replaceChildren(head('broken'));
+    $('win-hacked-h').replaceChildren(head(s.loaded ? 'broken' : 'ok', true));
+    win.classList.toggle('is-empty', !s.loaded);
+
+    // the prefix in the right window, with a remove button; or the ways to load one
+    const card = $('pfx-card');
+    $('pfx-empty').hidden = !!s.loaded;
+    $('use-made').hidden = !s.made;
+    if (s.loaded) {
+      const chip = document.createElement('div');
+      chip.className = 'pfx-chip';
+      const icon = document.createElement('span');
+      icon.className = 'pfx-icon';
+      icon.innerHTML = HAMMER;
+      const name = document.createElement('span');
+      name.className = 'pfx-name';
+      name.textContent = s.loaded.fileName;
+      name.title = s.loaded.fileName;
+      const from = document.createElement('span');
+      from.className = 'pfx-from';
+      from.textContent = t(fromUpload ? 'run.loadedFrom' : 'pfx.fromStep2');
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'pfx-x';
+      x.textContent = '×';
+      x.title = t('pfx.remove');
+      x.setAttribute('aria-label', t('pfx.remove'));
+      x.addEventListener('click', unload);
+      chip.append(icon, name, from, x);
+      card.replaceChildren(chip);
+    } else card.replaceChildren();
     const runBtn = $<HTMLButtonElement>('run');
-    runBtn.disabled = s.running || !s.loaded || s.backend.status === 'offline';
+    runBtn.disabled = s.running || s.backend.status === 'offline';
     $('r-val').textContent = String(s.r);
     $<HTMLButtonElement>('r-prev').disabled = s.r === R_STEPS[0];
     $<HTMLButtonElement>('r-next').disabled = s.r === R_STEPS[R_STEPS.length - 1];
@@ -648,7 +733,8 @@ export function mountDemo(store: Store) {
     if (any('lang')) renderChips();
     if (any('lang', 'backend', 'leftMode', 'finding', 'pending', 'want', 'picked', 'solving', 'leftMsg', 'leftErr')) renderStep1();
     if (any('lang', 'backend', 'picked', 'finding', 'solving', 'made', 'loaded', 'solveMsg', 'solveErr')) renderStep2();
-    if (any('lang', 'backend', 'loaded', 'running', 'r', 'rightMsg', 'rightErr')) renderStep3();
+    if (any('lang', 'backend', 'loaded', 'made', 'running', 'r', 'rightMsg', 'rightErr')) renderStep3();
+    if (any('backend')) carrierP = null;
     if (any('picked')) renderAnimIdle();
     if (any('loaded')) renderEmpty();
     if (any('lang')) {

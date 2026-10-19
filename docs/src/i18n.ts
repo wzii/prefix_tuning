@@ -159,19 +159,6 @@ const D = {
     en: 'upload a file',
     zh: '上传文件',
   },
-  'run.remove': { en: 'Remove', zh: '移除' },
-  'run.need': {
-    en: 'Compute a prefix in Step 2 first.',
-    zh: '请先在第 2 步计算 prefix。',
-  },
-  'run.loadedFrom': { en: 'from your upload', zh: '来自你上传的文件' },
-  'card.meta': { en: '{layers} layers × {kv} KV heads × {m} slots · {size}', zh: '{layers} 层 × {kv} 个 KV head × {m} 个 slot · {size}' },
-  'st.uploading': { en: 'Checking the file…', zh: '正在校验文件…' },
-  'results.h': { en: 'Results', zh: '实验结果' },
-  'mech.src': {
-    en: 'Source run',
-    zh: 'source 运行',
-  },
   'mech.new': {
     en: 'New input + prefix',
     zh: '新输入 + prefix',
@@ -262,9 +249,21 @@ const D = {
     en: 'Shown: layer {l}, KV head {kv}. {m} rows = {G} query heads × {k} tokens; {T} source positions.',
     zh: '图中：第 {l} 层、第 {kv} 个 KV head。{m} 行 = {G} 个 query head × {k} 个 token；{T} 个 source 位置。',
   },
-  'an.count': {
-    en: '{n} linear systems ({L} layers × {H} KV heads) solved in {ms} ms. Largest condition number $\\kappa(S) = {cond}$; largest relative residual {res}.',
-    zh: '共 {n} 个线性方程组（{L} 层 × {H} 个 KV head），用时 {ms} 毫秒。最大条件数 $\\kappa(S) = {cond}$，最大相对残差 {res}。',
+  'an.c.n': {
+    en: '{n} linear systems solved: {L} layers × {H} KV heads',
+    zh: '共求解 {n} 个线性方程组：{L} 层 × {H} 个 KV head',
+  },
+  'an.c.ms': {
+    en: 'Total time on the GPU server: {ms} ms',
+    zh: 'GPU 服务器总用时：{ms} 毫秒',
+  },
+  'an.c.cond': {
+    en: 'Largest condition number $\\kappa(S)$: {cond} (1 is ideal; the smaller, the more stable the solve)',
+    zh: '最大条件数 $\\kappa(S)$：{cond}（理想值为 1，越小求解越稳定）',
+  },
+  'an.c.res': {
+    en: 'Largest relative residual $\\|SW-R\\|/\\|R\\|$: {res} (0 would be exact; about $10^{-16}$ is the limit of float64 arithmetic)',
+    zh: '最大相对残差 $\\|SW-R\\|/\\|R\\|$：{res}（0 表示精确解；约 $10^{-16}$ 是 float64 运算的精度极限）',
   },
   'file.empty': {
     en: 'The computed prefix will appear here as a .safetensors file.',
@@ -273,10 +272,6 @@ const D = {
   'file.solving': {
     en: 'Solving…',
     zh: '求解中…',
-  },
-  'file.have': {
-    en: 'Already have a prefix file?',
-    zh: '已经有 prefix 文件？',
   },
   'insp.open': {
     en: 'Inspect file',
@@ -504,8 +499,8 @@ const D = {
     zh: 'prefix 就是这样一张隐藏的纸条，只不过上面写的是数字而不是文字。通常，人们要反复试错、训练好几个小时，才能得到一张好用的纸条。',
   },
   'make.ready': {
-    en: 'Target sentence: “{y}”',
-    zh: '目标句子：“{y}”',
+    en: 'Target sentence: ',
+    zh: '目标句子：',
   },
   'make.readyManual': {
     en: 'Target: whatever the model writes in the {k} tokens after your opening line.',
@@ -514,10 +509,6 @@ const D = {
   'chat.h': {
     en: 'Step 3: Hack the LLM generation with the computed prefix',
     zh: '第 3 步：用计算出的 prefix 劫持大模型的生成',
-  },
-  'chat.loaded': {
-    en: 'Prefix loaded: {name}',
-    zh: '已载入 prefix：{name}',
   },
   'chat.ph': {
     en: 'Type a prompt for the model…',
@@ -534,10 +525,6 @@ const D = {
   'chat.ok': {
     en: 'Qwen3-4B',
     zh: 'Qwen3-4B',
-  },
-  'chat.broken': {
-    en: 'Qwen3-4B, hacked by the prefix',
-    zh: '被 prefix 劫持的 Qwen3-4B',
   },
   'chat.hit': {
     en: 'said exactly the chosen sentence',
@@ -559,10 +546,6 @@ const D = {
     en: 'Send a prompt above. Both models get the same message.',
     zh: '在上方发送一条 prompt，两个模型收到的是同一条消息。',
   },
-  'chat.needPrefix': {
-    en: 'Compute a prefix in Step 2; it is loaded here automatically.',
-    zh: '先在第 2 步计算 prefix，它会自动加载到这里。',
-  },
   'win.plain': {
     en: 'without prefix',
     zh: '不加 prefix',
@@ -570,6 +553,34 @@ const D = {
   'win.hacked': {
     en: 'with the prefix',
     zh: '加上 prefix',
+  },
+  'win.none': {
+    en: 'no prefix loaded',
+    zh: '未加载 prefix',
+  },
+  'chat.yourPrompt': {
+    en: 'Your prompt',
+    zh: '你的 prompt',
+  },
+  'chat.examples': {
+    en: 'Example prompts',
+    zh: '示例 prompt',
+  },
+  'pfx.none': {
+    en: 'Without a prefix, this window answers like the one on the left.',
+    zh: '没有 prefix 时，此窗口与左侧一样，由模型直接回答。',
+  },
+  'pfx.useMade': {
+    en: 'Load the prefix from Step 2',
+    zh: '加载第 2 步的 prefix',
+  },
+  'pfx.remove': {
+    en: 'Remove prefix',
+    zh: '移除 prefix',
+  },
+  'pfx.fromStep2': {
+    en: 'from Step 2',
+    zh: '来自第 2 步',
   },
   'method.h': {
     en: 'Method',
@@ -705,6 +716,14 @@ const D = {
     en: 'One prefix serves one input–output pair. With two or more pairs the problem is out of reach: the paper gives a two-element dataset that even full fine-tuning cannot realize (Theorem 2.2).',
     zh: '一个 prefix 只对应一对输入输出。两对及以上时问题就超出了能力范围：论文给出了一个只有两个元素、连完整 fine-tuning 都无法实现的数据集（Theorem 2.2）。',
   },
+  'card.meta': { en: '{layers} layers × {kv} KV heads × {m} slots · {size}', zh: '{layers} 层 × {kv} 个 KV head × {m} 个 slot · {size}' },
+  'st.uploading': { en: 'Checking the file…', zh: '正在校验文件…' },
+  'results.h': { en: 'Results', zh: '实验结果' },
+  'mech.src': {
+    en: 'Source run',
+    zh: 'source 运行',
+  },
+  'run.loadedFrom': { en: 'from your upload', zh: '来自你上传的文件' },
 } satisfies Record<string, Entry>;
 
 export type Key = keyof typeof D;
