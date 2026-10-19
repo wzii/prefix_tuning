@@ -207,7 +207,10 @@
             </div>
             <div class="duo">
               <div class="win win-plain">
-                <div class="win-h" id="win-plain-h"></div>
+                <div class="win-h">
+                  <div id="win-plain-h"></div>
+                  <p class="win-note" data-i18n="win.never"></p>
+                </div>
                 <div class="chat-log" id="log-plain" aria-live="polite"></div>
               </div>
               <div class="win win-hacked">
@@ -215,12 +218,11 @@
                   <div id="win-hacked-h"></div>
                   <div class="win-pfx" id="win-pfx">
                     <div id="pfx-card"></div>
-                    <div class="pfx-empty" id="pfx-empty">
-                      <span data-i18n="pfx.none"></span>
-                      <span class="pfx-acts">
-                        <button type="button" class="link small" id="use-made" data-i18n="pfx.useMade"></button>
-                        <label class="upload"><span data-i18n="run.upload"></span><input type="file" id="file" accept=".safetensors,.zip" /></label>
-                      </span>
+                    <p class="win-note" id="pfx-none" data-i18n="pfx.none"></p>
+                    <div class="pfx-acts">
+                      <label class="upload pfx-up"><span data-i18n="pfx.upload"></span><input type="file" id="file" accept=".safetensors,.zip" /></label>
+                      <button type="button" class="link small" id="use-made" data-i18n="pfx.useMade"></button>
+                      <span class="pfx-drop" data-i18n="pfx.drop"></span>
                     </div>
                   </div>
                 </div>

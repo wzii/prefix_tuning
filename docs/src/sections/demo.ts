@@ -691,8 +691,9 @@ export function mountDemo(store: Store) {
 
     // the prefix in the right window, with a remove button; or the ways to load one
     const card = $('pfx-card');
-    $('pfx-empty').hidden = !!s.loaded;
-    $('use-made').hidden = !s.made;
+    $('pfx-none').hidden = !!s.loaded;
+    // offered whenever the window holds something other than step 2's prefix
+    $('use-made').hidden = !s.made || (!!s.loaded && s.loaded.prefixId === s.made.prefixId && !fromUpload);
     if (s.loaded) {
       const chip = document.createElement('div');
       chip.className = 'pfx-chip';

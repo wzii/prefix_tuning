@@ -1300,6 +1300,7 @@ html {
 .win-h {
   display: grid;
   gap: 8px;
+  align-content: start;
 }
 .win-pfx {
   font-size: 12.5px;
@@ -1347,16 +1348,47 @@ html {
   color: var(--ink);
   background: rgba(127, 127, 127, 0.15);
 }
-.pfx-empty {
-  display: grid;
-  gap: 4px;
+.win-note {
+  margin: 0;
+  font-size: 12.5px;
   color: var(--muted);
 }
 .pfx-acts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 14px;
+  gap: 6px 14px;
+  margin-top: 6px;
+}
+.upload.pfx-up {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--prefix);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+}
+.upload.pfx-up span {
+  text-decoration: none;
+}
+.upload.pfx-up:hover {
+  box-shadow: 0 0 0 3px var(--prefix-soft);
+}
+.pfx-drop {
+  color: var(--faint);
+}
+/* both windows share their rows, so the headers line up whatever they hold */
+.duo {
+  grid-auto-rows: auto;
+}
+.win {
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 0;
 }
 .pfx-acts .link.small {
   color: var(--focus);

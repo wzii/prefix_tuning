@@ -155,10 +155,6 @@ const D = {
     en: 'Download',
     zh: '下载',
   },
-  'run.upload': {
-    en: 'upload a file',
-    zh: '上传文件',
-  },
   'mech.new': {
     en: 'New input + prefix',
     zh: '新输入 + prefix',
@@ -573,6 +569,18 @@ const D = {
   'pfx.useMade': {
     en: 'Load the prefix from Step 2',
     zh: '加载第 2 步的 prefix',
+  },
+  'win.never': {
+    en: 'The model on its own: this window never uses a prefix.',
+    zh: '模型自身的回答：此窗口始终不加 prefix。',
+  },
+  'pfx.upload': {
+    en: 'Upload your own prefix',
+    zh: '上传你自己的 prefix',
+  },
+  'pfx.drop': {
+    en: 'or drop a .safetensors file on this window',
+    zh: '或把 .safetensors 文件拖到此窗口',
   },
   'pfx.remove': {
     en: 'Remove prefix',
