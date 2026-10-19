@@ -127,7 +127,7 @@ async function boot() {
         } catch {
           /* storage blocked */
         }
-        store.set({ backend: { api: new MockApi(), status: 'mock' }, solve: undefined, made: undefined, loaded: undefined, gen: undefined });
+        store.set({ backend: { api: new MockApi(), status: 'mock' }, picked: undefined, solve: undefined, made: undefined, loaded: undefined, gen: undefined });
         void start();
       };
     }
@@ -157,11 +157,9 @@ async function boot() {
   addEventListener('scroll', () => (raf ||= requestAnimationFrame(spy)), { passive: true });
   spy();
 
-  /** First visit: compute the example, hand it over, run it, so the demo opens filled in. */
+  /** First visit: step 1 opens with an example chosen; computing the prefix is the visitor's click. */
   async function start() {
     await demo.pickExample(store.s.presetId ?? first.id);
-    demo.useMade();
-    await demo.say(first.userInput);
   }
 
   store.set({ lang: initial.lang, backend, presetId: initial.presetId, view: initial.view, r: initial.r });
