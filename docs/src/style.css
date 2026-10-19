@@ -1060,27 +1060,17 @@ html {
 .an-idle {
   color: var(--faint);
 }
-.an-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-  gap: 2px;
-  max-width: 400px;
-}
-.an-grid i {
-  aspect-ratio: 1;
-  border-radius: 1.5px;
-  background: var(--surface-2);
-  transition: background 0.2s;
-}
-.an-grid i.is-on {
-  background: var(--prefix);
-  opacity: 0.6;
-}
-.an-grid i.is-shown.is-on {
-  opacity: 1;
-}
-.an-grid i.is-shown.is-on {
-  background: var(--ink);
+.an-solved {
+  justify-self: start;
+  margin: 0;
+  padding: 8px 16px;
+  border: 1px solid var(--ok);
+  border-radius: 6px;
+  background: var(--ok-soft);
+  color: var(--ok);
+  font-size: 15px;
+  font-weight: 700;
+  animation: land 0.5s ease-out;
 }
 .fslot-empty {
   margin: 0;

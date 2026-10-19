@@ -237,6 +237,10 @@ const D = {
     en: '③ Solve for $W$ and set the prefix values to $\\tilde V = W\\,V_{\\mathrm{src}}$, in every KV head of every layer.',
     zh: '③ 解出 $W$，令 prefix 的 value 为 $\\tilde V = W\\,V_{\\mathrm{src}}$；每一层的每个 KV head 都解一次。',
   },
+  'an.solved': {
+    en: '$W$ is solved!',
+    zh: '$W$ 求解完成！',
+  },
   'an.hidden': {
     en: 'hidden prompt · {p} tokens',
     zh: '隐藏 prompt · {p} 个 token',

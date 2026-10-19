@@ -158,19 +158,10 @@ export async function play(box: HTMLElement, d: AnimData, alive: () => boolean, 
 
   // ③ every KV head of every layer
   const s3 = stepBox(3, t('an.s3'));
-  const grid = el('div', 'an-grid');
-  grid.style.setProperty('--cols', String(d.nLayers));
-  const cells: HTMLElement[] = [];
-  // rows are KV heads, columns layers; filled layer by layer, as the solver goes
-  for (let h = 0; h < d.nKv; h++)
-    for (let l = 0; l < d.nLayers; l++) {
-      const c = el('i', '');
-      if (detail && l === detail.layer && h === detail.kvHead) c.className = 'is-shown';
-      cells[l * d.nKv + h] = c;
-      grid.append(c);
-    }
+  const solved = el('p', 'an-solved', rich(t('an.solved')));
+  solved.hidden = true;
   const count = el('ul', 'an-count');
-  s3.append(grid, count);
+  s3.append(solved, count);
   box.append(s1, s2, s3);
 
   const k = solve.targetTokens.length;
@@ -219,13 +210,10 @@ export async function play(box: HTMLElement, d: AnimData, alive: () => boolean, 
   }
 
   s3.classList.add('is-on');
-  if (!(await wait(200))) return;
-  const total = cells.length;
-  const batch = Math.max(1, Math.ceil(total / 24));
-  for (let i = 0; i < total; i += batch) {
-    for (let j = i; j < Math.min(total, i + batch); j++) cells[j].classList.add('is-on');
-    if (!(await wait(35))) return;
-  }
+  if (!(await wait(450))) return;
+  solved.hidden = false;
+  if (!(await wait(350))) return;
+  const total = d.nLayers * d.nKv;
   const [mant, ex] = solve.summary.residMax.toExponential(1).split('e');
   const res = `$${mant}\\times 10^{${Number(ex)}}$`;
   const facts: [Key, Record<string, string | number>][] = [
