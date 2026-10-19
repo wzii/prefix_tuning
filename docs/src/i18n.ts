@@ -136,7 +136,7 @@ const D = {
     zh: '亲自试一试',
   },
   'demo.h': {
-    en: 'Try it yourself: Force an LLM to say your sentence with a computed prefix',
+    en: 'Try it yourself: Force an LLM to generate your target sentence with a computed prefix',
     zh: '亲自试一试：用计算出的 prefix 逼大模型说出你的目标句子',
   },
   'make.h': {
