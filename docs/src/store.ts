@@ -10,11 +10,15 @@ export interface Msg {
   sub?: Record<string, Key>;
 }
 
+/** The target chosen in step 1: a search the server matched, or an opening line the user wrote. */
+export type Picked = { kind: 'search'; searchId: string; tokens: Token[] } | { kind: 'manual'; source: string; k: number };
+
 export interface State {
   lang: Lang;
   backend: Backend;
-  // left: choose an output (example or your own), or write a source yourself
+  // step 1: choose an output (example or your own), or write a source yourself
   leftMode: 'examples' | 'custom' | 'manual';
+  picked?: Picked;
   presetId: string | null;
   want: string;
   wantTokens: number;
@@ -24,12 +28,15 @@ export interface State {
   source: string;
   k: number;
   sourceTokens: Token[];
+  leftMsg?: Msg;
+  leftErr?: boolean;
+  // step 2: compute the prefix
   solving: boolean;
   solve?: SolveResult;
   made?: PrefixInfo;
-  leftMsg?: Msg;
-  leftErr?: boolean;
-  // right: run the model with whatever prefix was handed over
+  solveMsg?: Msg;
+  solveErr?: boolean;
+  // step 3: run the model with the prefix in use (the one just made, or an upload)
   loaded?: PrefixInfo;
   userInput: string;
   userTokens: Token[];

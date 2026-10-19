@@ -844,27 +844,415 @@ html {
   box-shadow: 0 0 0 3px var(--prefix-soft);
 }
 
-/* ---------------- demo: one box, two panes, canvas underneath */
-.lab {
+/* ---------------- demo: three steps, one under the other */
+.steps {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
 }
-.lab-grid {
+.step-arrow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+  place-items: center;
+  height: 30px;
+  background: var(--band);
+  border-block: 1px solid var(--line);
+  color: var(--prefix);
+  font-size: 18px;
+  line-height: 1;
+}
+.step.pane {
+  padding: 22px 24px;
+}
+@media (max-width: 560px) {
+  .step.pane {
+    padding: 18px 16px;
+  }
+}
+
+/* step 2: the button and the solve on the left, the file on the right */
+.solve-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) 40px minmax(0, 1fr);
+  align-items: start;
+}
+.solve-left,
+.solve-right {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-width: 0;
+}
+.solve-arrow {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  color: var(--prefix);
+  font-size: 22px;
 }
 @media (max-width: 860px) {
-  .lab-grid {
-    grid-template-columns: 1fr;
+  .solve-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .lab-arrow {
-    height: 36px;
+  .solve-arrow {
+    height: 34px;
   }
-  .lab-arrow span {
+  .solve-arrow span {
     transform: rotate(90deg);
   }
+}
+.act-big {
+  justify-self: start;
+  height: 44px;
+  padding: 0 26px;
+  font-size: 15.5px;
+}
+.act.pulse {
+  animation: invite 1.8s ease-in-out infinite;
+}
+@keyframes invite {
+  50% {
+    box-shadow: 0 0 0 6px var(--prefix-soft), 0 0 0 7px var(--prefix);
+  }
+}
+.an {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  background: var(--band);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+}
+.an-step {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+.an-step.is-on,
+.an:not(.is-playing):not(.is-done) .an-step[data-s='1'] {
+  opacity: 1;
+}
+.an-lab {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.an-src {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.an-x {
+  font: 12px/1 var(--f-mono);
+  padding: 5px 8px;
+  border: 1px dashed var(--faint);
+  border-radius: 3px;
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 5px, var(--surface) 5px 10px);
+  color: var(--muted);
+}
+.an-arrow {
+  margin: 0 4px;
+  color: var(--faint);
+}
+.an-y {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.an-ytok {
+  transition: background 0.2s, color 0.2s, transform 0.2s, opacity 0.2s;
+}
+.an.is-playing .an-ytok:not(.is-on) {
+  opacity: 0.25;
+}
+.an-ytok.is-on,
+.an.is-done .an-ytok {
+  background: var(--prefix-soft);
+  color: var(--prefix-ink);
+}
+.an-ytok.is-cur {
+  outline: 2px solid var(--prefix);
+  transform: translateY(-2px);
+}
+.an-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+}
+.an-mat {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.an-mat figcaption {
+  font-size: 13px;
+  color: var(--muted);
+}
+.an-mat canvas {
+  display: block;
+}
+.an-op {
+  align-self: center;
+  color: var(--muted);
+  font-size: 18px;
+}
+.an-note,
+.an-count,
+.an-idle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.an-count {
+  color: var(--ink);
+}
+.an-idle {
+  color: var(--faint);
+}
+.an-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 2px;
+  max-width: 400px;
+}
+.an-grid i {
+  aspect-ratio: 1;
+  border-radius: 1.5px;
+  background: var(--surface-2);
+  transition: background 0.2s;
+}
+.an-grid i.is-on {
+  background: var(--prefix);
+  opacity: 0.6;
+}
+.an-grid i.is-shown.is-on {
+  opacity: 1;
+}
+.an-grid i.is-shown.is-on {
+  background: var(--ink);
+}
+.fslot-empty {
+  margin: 0;
+  padding: 26px 16px;
+  border: 2px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+.fslot-empty.is-busy {
+  border-color: var(--prefix);
+  background: var(--prefix-soft);
+  color: var(--prefix-ink);
+}
+.up-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+}
+
+/* step 2: what is inside the file */
+.insp {
+  display: grid;
+  gap: 16px;
+  padding: 14px;
+  background: var(--band);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 0;
+}
+.insp-sec {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.insp h4 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.insp-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 12.5px;
+}
+.insp-meta dt {
+  font-family: var(--f-mono);
+  color: var(--muted);
+}
+.insp-meta dd {
+  margin: 0;
+  display: grid;
+  min-width: 0;
+}
+.insp-v {
+  font-family: var(--f-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.insp-what {
+  font-size: 12px;
+  color: var(--faint);
+}
+.insp-p,
+.insp-stats {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.insp-stats {
+  font: 11.5px var(--f-mono);
+  overflow-wrap: anywhere;
+}
+.insp-all summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--focus);
+}
+.insp-list {
+  max-height: 180px;
+  overflow: auto;
+  margin-top: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.insp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  padding: 3px 8px;
+  font: 11.5px var(--f-mono);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.insp-row:last-child {
+  border-bottom: 0;
+}
+.insp-row code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.insp-off {
+  color: var(--faint);
+}
+.insp-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.insp-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.insp-lab {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.insp-ctl .stepper output {
+  min-width: 2.6em;
+}
+.insp-map {
+  min-width: 0;
+}
+
+/* step 3: one input, two chat windows */
+.duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 760px) {
+  .duo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.win {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  background: var(--band);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.win-hacked {
+  border-color: var(--prefix);
+}
+.win-h {
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.win-hacked .win-h {
+  background: var(--prefix-soft);
+  border-bottom-color: var(--prefix);
+}
+.win-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.win-who .avatar {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+}
+.win-txt {
+  display: grid;
+  line-height: 1.25;
+}
+.win-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+.win-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.win-hacked .win-sub {
+  color: var(--prefix-ink);
+}
+.win-file {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  font: 11.5px var(--f-mono);
+  color: var(--prefix-ink);
+  white-space: nowrap;
+}
+.win-file .hammer {
+  flex: none;
+  width: 16px;
+}
+@media (max-width: 560px) {
+  .win-file {
+    display: none;
+  }
+}
+.win .chat-log {
+  height: 300px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 .pane {
   padding: 20px;
@@ -883,33 +1271,9 @@ html {
   font-size: 1.15rem;
   font-weight: 600;
 }
-.pane-n {
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--ink);
-  color: var(--bg);
-  font: 600 13px var(--f-mono);
-}
 .pane-p {
   color: var(--muted);
   font-size: 14px;
-}
-.lab-arrow {
-  display: grid;
-  place-items: center;
-  background: var(--band);
-  border-inline: 1px solid var(--line);
-  color: var(--prefix);
-  font-size: 22px;
-}
-@media (max-width: 860px) {
-  .lab-arrow {
-    border-inline: 0;
-    border-block: 1px solid var(--line);
-  }
 }
 .row {
   display: flex;
@@ -922,10 +1286,6 @@ html {
 }
 .f-k select {
   width: 84px;
-}
-.lab-label {
-  font-size: 12.5px;
-  color: var(--muted);
 }
 .act {
   height: 38px;
@@ -953,18 +1313,11 @@ html {
 .ghost:hover {
   border-color: var(--ink);
 }
-.ghost.pulse {
-  border-color: var(--prefix);
-  box-shadow: 0 0 0 3px var(--prefix-soft);
-}
 .card-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 10px;
-}
-.card-actions .hint {
-  min-height: 0;
 }
 .status {
   font-size: 13px;
@@ -989,12 +1342,6 @@ html {
   background: var(--prefix-soft);
   color: var(--prefix-ink);
   min-width: 0;
-}
-.pfile.is-draggable {
-  cursor: grab;
-}
-.pfile.is-draggable:active {
-  cursor: grabbing;
 }
 .pfile-icon {
   flex: none;
@@ -1038,58 +1385,9 @@ html {
 .pfile-note {
   font-style: italic;
 }
-.pfile:has(.pfile-x) {
-  padding-right: 34px;
-}
-.pfile-x {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  border: 0;
-  border-radius: 4px;
-  padding: 2px 6px;
-  background: none;
-  color: inherit;
-  opacity: 0.55;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-}
-.pfile-x:hover,
-.pfile-x:focus-visible {
-  opacity: 1;
-  background: rgba(127, 127, 127, 0.15);
-}
 
 /* where the prefix is dropped */
-.drop {
-  border: 2px dashed var(--line);
-  border-radius: 8px;
-  padding: 16px;
-  min-height: 92px;
-  display: grid;
-  align-content: center;
-  transition: border-color 0.15s, background 0.15s;
-}
-.drop.has-file {
-  border: 0;
-  padding: 0;
-}
-.drop-empty {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 14px;
-  text-align: center;
-}
-body.is-dragging .drop,
-.drop.is-over {
-  border-color: var(--prefix);
-  background: var(--prefix-soft);
-}
-.drop.flash .pfile {
+.fslot.flash .pfile {
   animation: land 0.6s ease-out;
 }
 @keyframes land {
@@ -1392,23 +1690,6 @@ body.is-dragging .drop,
   gap: 8px;
   justify-items: start;
 }
-/* the handed-over prefix on the left: a one-line file chip */
-.pfile.compact {
-  padding: 8px 12px;
-  background: transparent;
-  align-items: center;
-}
-.pfile.compact .pfile-icon {
-  width: 22px;
-  gap: 2px;
-  padding-top: 0;
-}
-.pfile.compact .pfile-icon i {
-  height: 3px;
-}
-.pfile.compact .pfile-name {
-  font-size: 13px;
-}
 /* details: one h2, three h3 */
 .article > h2 {
   margin-bottom: -12px;
@@ -1442,11 +1723,6 @@ body.is-dragging .drop,
 .results-sec figcaption {
   font-size: 13px;
 }
-@media (max-width: 860px) {
-  .card-actions .hint {
-    display: none;
-  }
-}
 @media (max-width: 560px) {
   .run-row {
     grid-template-columns: auto 1fr;
@@ -1460,9 +1736,6 @@ body.is-dragging .drop,
   .intro {
     padding-block: 32px 40px;
   }
-}
-.lab {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .hint.sent b {
@@ -1502,21 +1775,6 @@ button.demo {
 }
 
 /* ================= chat demo ================= */
-.chat-pane {
-  display: flex;
-  flex-direction: column;
-}
-.chat-pane .pane-h .demo {
-  margin-left: auto;
-}
-.drop {
-  min-height: 0;
-  padding: 10px 12px;
-}
-.drop.has-file {
-  border: 0;
-  padding: 0;
-}
 .chat-log {
   height: 330px;
   overflow-y: auto;
@@ -1532,20 +1790,6 @@ button.demo {
   margin: auto;
   color: var(--faint);
   font-size: 14px;
-}
-.msg-system {
-  align-self: center;
-  font-size: 12.5px;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 3px 12px;
-  text-align: center;
-}
-.turn {
-  display: grid;
-  gap: 10px;
 }
 .msg {
   display: flex;
@@ -1807,23 +2051,16 @@ button.demo {
 }
 
 /* ---------------- the prefix is a hammer */
-.pfile-icon,
-.pfile.compact .pfile-icon {
+.pfile-icon {
   width: 30px;
   padding-top: 0;
   display: block;
-}
-.pfile.compact .pfile-icon {
-  width: 28px;
 }
 .hammer {
   display: block;
   width: 100%;
   height: auto;
   transform: rotate(-30deg);
-}
-.pfile.is-draggable:hover .hammer {
-  animation: swing 0.6s ease-in-out;
 }
 @keyframes swing {
   40% { transform: rotate(-60deg); }
@@ -1849,12 +2086,6 @@ button.demo {
   --bad: #f87171;
   color: var(--ink);
   background: #111614;
-}
-.hack .pane-n {
-  background: transparent;
-  border: 1px solid var(--prefix);
-  color: var(--prefix);
-  border-radius: 3px;
 }
 .hack .pane-h h3 {
   font-family: var(--f-mono);

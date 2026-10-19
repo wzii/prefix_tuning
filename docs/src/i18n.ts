@@ -104,6 +104,10 @@ const D = {
     en: '$S$, $W$ and $R$ for layer {l}, KV head {kv} of the [demo above](#demo). Rows of $S$ and $R$ are the $m=Gk$ stacked queries, grouped by query head (thin lines every $k$ rows); within a group, row $t$ is the query that writes $y_{t+1}$. Columns of $S$ are the $m$ prefix slots, in the same order. Columns of $W$ and $R$ are the source positions: $x\'_1,\\dots,x\'_p$, then $y_1,\\dots,y_{k-1}$ after the vertical line. $\\kappa(S) = {cond}$, relative residual $\\|SW-R\\|/\\|R\\| = {res}$.',
     zh: '[上方演示](#demo)中第 {l} 层、第 {kv} 个 KV head 的 $S$、$W$ 与 $R$。$S$ 和 $R$ 的行是堆叠起来的 $m=Gk$ 个 query，按 query head 分组（每 $k$ 行一条细线）；组内第 $t$ 行是写出 $y_{t+1}$ 的那个 query。$S$ 的列是 $m$ 个 prefix slot，顺序与行相同。$W$ 和 $R$ 的列是 source 的各个位置：先是 $x\'_1,\\dots,x\'_p$，竖线之后是 $y_1,\\dots,y_{k-1}$。$\\kappa(S) = {cond}$，相对残差 $\\|SW-R\\|/\\|R\\| = {res}$。',
   },
+  'svr.empty': {
+    en: 'Compute a prefix in Step 2 of the demo above to see this figure.',
+    zh: '在上方演示的第 2 步计算 prefix 后，这里会显示该图。',
+  },
   'art.fig2.S': {
     en: '$S$ · prefix attention',
     zh: '$S$ · prefix 注意力',
@@ -140,32 +144,16 @@ const D = {
     zh: '亲自试一试：用计算出的 prefix 逼大模型说出你的目标句子',
   },
   'make.h': {
-    en: 'Pick a sentence',
-    zh: '选一句话',
+    en: 'Step 1: Pick your target output sentence',
+    zh: '第 1 步：选择你的目标输出句子',
   },
   'make.p': {
-    en: 'The model hacked by the prefix has to say it, whatever you type.',
-    zh: '被 prefix 劫持的模型，无论你说什么，都只能说出这句话。',
-  },
-  'make.btn': {
-    en: 'Create prefix',
-    zh: '生成 prefix',
-  },
-  'make.busy': {
-    en: 'Creating…',
-    zh: '生成中…',
+    en: 'Choose the sentence the model will be forced to say.',
+    zh: '选一句你想逼模型说出的话。',
   },
   'make.dl': {
     en: 'Download',
     zh: '下载',
-  },
-  'make.use': {
-    en: 'Put it in the chat →',
-    zh: '放进聊天框 →',
-  },
-  'make.drag': {
-    en: 'or drag the card across',
-    zh: '也可以直接把卡片拖过去',
   },
   'run.upload': {
     en: 'upload a file',
@@ -173,8 +161,8 @@ const D = {
   },
   'run.remove': { en: 'Remove', zh: '移除' },
   'run.need': {
-    en: 'Put a prefix into the chat first.',
-    zh: '请先把 prefix 放进聊天框。',
+    en: 'Compute a prefix in Step 2 first.',
+    zh: '请先在第 2 步计算 prefix。',
   },
   'run.loadedFrom': { en: 'from your upload', zh: '来自你上传的文件' },
   'card.meta': { en: '{layers} layers × {kv} KV heads × {m} slots · {size}', zh: '{layers} 层 × {kv} 个 KV head × {m} 个 slot · {size}' },
@@ -211,16 +199,172 @@ const D = {
     zh: '你的句子',
   },
   'make.find': {
-    en: 'Create prefix',
-    zh: '生成 prefix',
+    en: 'Use this sentence',
+    zh: '就用这一句',
   },
   'make.finding': {
-    en: 'Creating…',
-    zh: '生成中…',
+    en: 'Checking…',
+    zh: '检查中…',
   },
   'make.toManual': {
     en: 'Advanced: start from an opening line instead',
     zh: '高级：改用一句开头',
+  },
+  'solve.h': {
+    en: 'Step 2: Compute a prefix',
+    zh: '第 2 步：计算 prefix',
+  },
+  'solve.p': {
+    en: 'The prefix is not trained. Your sentence is turned into one small linear system per attention head, and solving them gives the prefix.',
+    zh: 'prefix 不需要训练：你的句子会在每个 attention head 上变成一个小的线性方程组，解出这些方程组就得到 prefix。',
+  },
+  'solve.btn': {
+    en: 'Compute prefix',
+    zh: '计算 prefix',
+  },
+  'solve.busy': {
+    en: 'Computing…',
+    zh: '计算中…',
+  },
+  'solve.done': {
+    en: 'Computed ✓',
+    zh: '已完成 ✓',
+  },
+  'solve.need': {
+    en: 'Pick a target sentence in Step 1 first.',
+    zh: '请先在第 1 步选择目标句子。',
+  },
+  'an.idle': {
+    en: 'Press the button to build the linear systems from your sentence and solve them.',
+    zh: '点击按钮，用你的句子构造线性方程组并求解。',
+  },
+  'an.s1': {
+    en: '① The source run: after a hidden prompt $x\'$, the model writes your sentence $y$ by itself.',
+    zh: '① source 运行：在隐藏 prompt $x\'$ 之后，模型自己写出你的句子 $y$。',
+  },
+  'an.s1manual': {
+    en: '① The source run: after your opening line $x\'$, the model writes $y$.',
+    zh: '① source 运行：在你写的开头 $x\'$ 之后，模型写出 $y$。',
+  },
+  'an.s2': {
+    en: '② Each output token $y_t$ is written by one query in every query head, and each query adds one row to the linear system $S\\,W = R$.',
+    zh: '② 每个输出 token $y_t$ 在每个 query head 中由一个 query 写出，每个 query 给线性方程组 $S\\,W = R$ 添上一行。',
+  },
+  'an.s3': {
+    en: '③ Solve for $W$ and set the prefix values to $\\tilde V = W\\,V_{\\mathrm{src}}$, in every KV head of every layer.',
+    zh: '③ 解出 $W$，令 prefix 的 value 为 $\\tilde V = W\\,V_{\\mathrm{src}}$；每一层的每个 KV head 都解一次。',
+  },
+  'an.hidden': {
+    en: 'hidden prompt · {p} tokens',
+    zh: '隐藏 prompt · {p} 个 token',
+  },
+  'an.shown': {
+    en: 'Shown: layer {l}, KV head {kv}. {m} rows = {G} query heads × {k} tokens; {T} source positions.',
+    zh: '图中：第 {l} 层、第 {kv} 个 KV head。{m} 行 = {G} 个 query head × {k} 个 token；{T} 个 source 位置。',
+  },
+  'an.count': {
+    en: '{n} linear systems ({L} layers × {H} KV heads) solved in {ms} ms. Largest condition number $\\kappa(S) = {cond}$; largest relative residual {res}.',
+    zh: '共 {n} 个线性方程组（{L} 层 × {H} 个 KV head），用时 {ms} 毫秒。最大条件数 $\\kappa(S) = {cond}$，最大相对残差 {res}。',
+  },
+  'file.empty': {
+    en: 'The computed prefix will appear here as a .safetensors file.',
+    zh: '计算出的 prefix 会以 .safetensors 文件的形式出现在这里。',
+  },
+  'file.solving': {
+    en: 'Solving…',
+    zh: '求解中…',
+  },
+  'file.have': {
+    en: 'Already have a prefix file?',
+    zh: '已经有 prefix 文件？',
+  },
+  'insp.open': {
+    en: 'Inspect file',
+    zh: '查看文件内容',
+  },
+  'insp.close': {
+    en: 'Hide details',
+    zh: '收起',
+  },
+  'insp.loading': {
+    en: 'Reading the file…',
+    zh: '正在读取文件…',
+  },
+  'insp.bad': {
+    en: 'This file cannot be read here: {msg}',
+    zh: '无法在这里读取该文件：{msg}',
+  },
+  'insp.header': {
+    en: 'Header metadata',
+    zh: '文件头元数据',
+  },
+  'insp.m.format': {
+    en: 'file format and version',
+    zh: '文件格式与版本',
+  },
+  'insp.m.model': {
+    en: 'the model the prefix is for',
+    zh: 'prefix 适用的模型',
+  },
+  'insp.m.p': {
+    en: 'length of the source, in tokens',
+    zh: 'source 的长度（token 数）',
+  },
+  'insp.m.k': {
+    en: 'length of the target sentence, in tokens',
+    zh: '目标句子的长度（token 数）',
+  },
+  'insp.m.last_token': {
+    en: 'last token of the source; your message must end with it',
+    zh: 'source 的最后一个 token；你的消息必须以它结尾',
+  },
+  'insp.m.expected_continuation': {
+    en: 'the target sentence, as tokens',
+    zh: '目标句子（按 token 切分）',
+  },
+  'insp.m.signature': {
+    en: 'the server’s signature, so it can take the file back without checking it again',
+    zh: '服务器的签名，再次上传时可免于重新校验',
+  },
+  'insp.tensors': {
+    en: 'Tensors',
+    zh: '张量',
+  },
+  'insp.tsum': {
+    en: '{n} tensors · {dtype} · {size}. Each layer has a key tensor and a value tensor, each of shape [{kv}, {m}, {hd}] = [KV heads, slots, head dimension].',
+    zh: '共 {n} 个张量 · {dtype} · {size}。每层一个 key 张量和一个 value 张量，形状都是 [{kv}, {m}, {hd}]，即 [KV head，slot，head 维度]。',
+  },
+  'insp.all': {
+    en: 'List all {n} tensors',
+    zh: '列出全部 {n} 个张量',
+  },
+  'insp.peek': {
+    en: 'Look inside a tensor',
+    zh: '查看张量的数值',
+  },
+  'insp.keys': {
+    en: 'Keys',
+    zh: 'Key',
+  },
+  'insp.values': {
+    en: 'Values',
+    zh: 'Value',
+  },
+  'insp.rows': {
+    en: 'Each row is one slot, aimed at one query: a query head writing one output token. Columns are the {hd} coordinates. Hover a cell for details. At run time each slot is repeated $r$ times; the file stores it once.',
+    zh: '每一行是一个 slot，对准一个 query：某个 query head 写出某个输出 token 时的那个 query。列是 {hd} 个坐标。把鼠标移到格子上可查看详情。运行时每个 slot 会重复 $r$ 次，文件里只存一份。',
+  },
+  'insp.stats': {
+    en: 'min {min} · max {max} · mean |x| {mean}',
+    zh: '最小值 {min} · 最大值 {max} · 平均 |x| {mean}',
+  },
+  'insp.tip': {
+    en: 'slot {i}: query head {h}, writing “{tok}” · dim {j} = {v}',
+    zh: 'slot {i}：query head {h}，写出“{tok}” · 第 {j} 维 = {v}',
+  },
+  'insp.missing': {
+    en: '{name} is not in this file.',
+    zh: '文件中没有 {name}。',
   },
   'make.missT': {
     en: 'We can’t force the model to say exactly that. The closest we can force is:',
@@ -360,24 +504,24 @@ const D = {
     zh: 'prefix 就是这样一张隐藏的纸条，只不过上面写的是数字而不是文字。通常，人们要反复试错、训练好几个小时，才能得到一张好用的纸条。',
   },
   'make.ready': {
-    en: 'Prefix ready. Hacked by it, the model has to say “{y}”',
-    zh: 'prefix 已生成。被它劫持后，模型只能说：“{y}”',
+    en: 'Target sentence: “{y}”',
+    zh: '目标句子：“{y}”',
+  },
+  'make.readyManual': {
+    en: 'Target: whatever the model writes in the {k} tokens after your opening line.',
+    zh: '目标：模型在你的开头之后接着写出的 {k} 个 token。',
   },
   'chat.h': {
-    en: 'Chat',
-    zh: '聊天',
-  },
-  'chat.drop': {
-    en: 'Drop the prefix here, or',
-    zh: '把 prefix 拖到这里，或',
+    en: 'Step 3: Hack the LLM generation with the computed prefix',
+    zh: '第 3 步：用计算出的 prefix 劫持大模型的生成',
   },
   'chat.loaded': {
     en: 'Prefix loaded: {name}',
     zh: '已载入 prefix：{name}',
   },
   'chat.ph': {
-    en: 'Say anything…',
-    zh: '随便说点什么…',
+    en: 'Type a prompt for the model…',
+    zh: '输入给模型的 prompt…',
   },
   'chat.send': {
     en: 'Send',
@@ -412,8 +556,20 @@ const D = {
     zh: '关于这个演示',
   },
   'chat.empty': {
-    en: 'Say anything. The plain model answers normally; the hacked one has no choice.',
-    zh: '随便说点什么。普通的模型会正常回答，被劫持的那个别无选择。',
+    en: 'Send a prompt above. Both models get the same message.',
+    zh: '在上方发送一条 prompt，两个模型收到的是同一条消息。',
+  },
+  'chat.needPrefix': {
+    en: 'Compute a prefix in Step 2; it is loaded here automatically.',
+    zh: '先在第 2 步计算 prefix，它会自动加载到这里。',
+  },
+  'win.plain': {
+    en: 'without prefix',
+    zh: '不加 prefix',
+  },
+  'win.hacked': {
+    en: 'with the prefix',
+    zh: '加上 prefix',
   },
   'method.h': {
     en: 'Method',

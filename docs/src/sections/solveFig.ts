@@ -73,9 +73,25 @@ export function mountSolveFigure(store: Store) {
     }
   }
 
+  /** Before any prefix exists (or after a new target cleared it): say where the figure comes from. */
+  function empty() {
+    seq++;
+    maps.forEach((m) => m.dispose());
+    maps.length = 0;
+    last = null;
+    const p = document.createElement('p');
+    p.className = 'note svr-empty';
+    p.textContent = t('svr.empty');
+    box.style.removeProperty('--svr-cols');
+    box.replaceChildren(p);
+    $('svr-cap').textContent = '';
+  }
+  empty();
+
   store.on((s, ch) => {
+    if ((ch.has('loaded') || ch.has('solve')) && !s.loaded && !s.solve) return empty();
     if (ch.has('loaded') || (ch.has('solve') && !s.loaded)) return void load();
     if (ch.has('view') && last && (last.layer !== s.view.layer || last.kvHead !== Math.floor(s.view.head / s.arch.G))) return void load();
-    if (ch.has('lang') && last) build(last);
+    if (ch.has('lang')) last ? build(last) : empty();
   });
 }

@@ -8,7 +8,9 @@ is committed.
 
 - Text, in English and Chinese: `src/i18n.ts` (one entry per piece of text, `en` and `zh`).
 - Page structure: `index.html`; styles: `src/style.css`.
-- The demo: `src/sections/demo.ts`; the example sentences: `src/mock/presets.ts`.
+- The demo: `src/sections/demo.ts` (its three steps), `src/sections/solveAnim.ts` (the step 2
+  animation), `src/sections/inspect.ts` (the file inspector); the example sentences:
+  `src/mock/presets.ts`.
 - Figures: `src/sections/intro.ts`, `src/sections/viz.ts`, `src/sections/solveFig.ts`.
 
 ## Preview

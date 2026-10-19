@@ -1,12 +1,14 @@
-import { ApiError, type PrefixInfo, type SolveResult } from '../api/types';
+import { ApiError, type PrefixInfo } from '../api/types';
 import { getLang, t, type Key } from '../i18n';
 import { PRESETS } from '../mock/presets';
-import type { Msg, Store } from '../store';
+import type { Msg, Picked, Store } from '../store';
 import { fit } from './intro';
 import { plain } from '../viz/tokens';
 import { ROBOT_BROKEN, HAMMER, ROBOT_OK } from '../viz/robots';
 import { R_STEPS } from './viz';
 import { isZip, unzipFirst, zipOne } from '../lib/zip';
+import { play, renderIdle, type AnimData } from './solveAnim';
+import { Inspector } from './inspect';
 
 /** The artifact viewer's save API, when this page runs inside one. */
 type Downloads = { save(r: { filename: string; data: Blob }): Promise<unknown> };
@@ -21,7 +23,6 @@ const viewerDownloads = (): Promise<Downloads | null> => {
 };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const DRAG_TYPE = 'application/x-am-prefix';
 const ERROR_KEYS = ['bad_input', 'too_long', 'prefix_not_found', 'gen_not_found'];
 
 export function errorMsg(err: unknown): Msg {
@@ -38,22 +39,12 @@ export function errorMsg(err: unknown): Msg {
 /** Every source and input ends with exactly one line break: the fixed last token. */
 export const withLast = (text: string) => text.replace(/\s+$/, '') + '\n';
 
-const fmtBytes = (n: number) => (n > 1e6 ? `${(n / 1e6).toFixed(1)}\u00a0MB` : `${Math.ceil(n / 1e3)}\u00a0kB`);
+const fmtBytes = (n: number) => (n > 1e6 ? `${(n / 1e6).toFixed(1)} MB` : `${Math.ceil(n / 1e3)} kB`);
 
 /** The prefix drawn as a file: name, shape, size, hash, and the y it records. */
-function prefixCard(info: PrefixInfo, opts: { draggable?: boolean; onRemove?: () => void; note?: string; compact?: boolean }) {
+function prefixCard(info: PrefixInfo, note?: string) {
   const el = document.createElement('div');
-  el.className = 'pfile' + (opts.draggable ? ' is-draggable' : '') + (opts.compact ? ' compact' : '');
-  if (opts.draggable) {
-    el.draggable = true;
-    el.addEventListener('dragstart', (e) => {
-      e.dataTransfer!.setData(DRAG_TYPE, info.prefixId);
-      e.dataTransfer!.setData('text/plain', info.fileName);
-      e.dataTransfer!.effectAllowed = 'copy';
-      document.body.classList.add('is-dragging');
-    });
-    el.addEventListener('dragend', () => document.body.classList.remove('is-dragging'));
-  }
+  el.className = 'pfile';
   const icon = document.createElement('div');
   icon.className = 'pfile-icon';
   icon.innerHTML = HAMMER;
@@ -69,37 +60,20 @@ function prefixCard(info: PrefixInfo, opts: { draggable?: boolean; onRemove?: ()
   sha.className = 'pfile-sha';
   sha.textContent = `SHA-256 ${info.sha256.slice(0, 16)}…`;
   sha.title = info.sha256;
-  body.append(name);
-  // the remove button sits in the top-right corner of every card that has one
-  const remove = () => {
-    if (!opts.onRemove) return [];
-    const x = document.createElement('button');
-    x.type = 'button';
-    x.className = 'pfile-x';
-    x.textContent = '×';
-    x.setAttribute('aria-label', t('run.remove'));
-    x.title = t('run.remove');
-    x.addEventListener('click', opts.onRemove);
-    return [x];
-  };
-  if (opts.compact) {
-    el.append(icon, body, ...remove());
-    return el;
-  }
-  body.append(meta, sha);
+  body.append(name, meta, sha);
   if (info.expected.length) {
     const y = document.createElement('div');
     y.className = 'pfile-y';
     y.textContent = `→ “${fit(info.expected.map((x) => x.text).join('').trim(), 300, 12)}”`;
     body.append(y);
   }
-  if (opts.note) {
+  if (note) {
     const n = document.createElement('div');
     n.className = 'pfile-note';
-    n.textContent = opts.note;
+    n.textContent = note;
     body.append(n);
   }
-  el.append(icon, body, ...remove());
+  el.append(icon, body);
   return el;
 }
 
@@ -113,13 +87,16 @@ function precheck(text: string): Key | null {
   return null;
 }
 
+/** One message sent to both models, and their two replies. */
 interface Turn {
-  text: string; // what was sent, ending in the added space
+  text: string; // what was sent, ending in the added line break
   plain: string;
   hacked: string;
   done: boolean;
   hit?: boolean;
-  el: HTMLElement;
+  plainBubble: HTMLElement;
+  hackedBubble: HTMLElement;
+  meta: HTMLElement;
 }
 
 const QUICK = {
@@ -132,10 +109,19 @@ export function mountDemo(store: Store) {
   const kSel = $<HTMLSelectElement>('k');
   const want = $<HTMLTextAreaElement>('want');
   const usr = $<HTMLInputElement>('usr');
-  const drop = $('drop');
   const fileIn = $<HTMLInputElement>('file');
-  const log = $('chat-log');
-  const turns: Turn[] = [];
+  const animBox = $('anim');
+  const inspBox = $('inspect');
+  const inspBtn = $<HTMLButtonElement>('inspect-btn');
+  const logPlain = $('log-plain');
+  const logHacked = $('log-hacked');
+  const inspector = new Inspector(inspBox);
+  let turn: Turn | null = null;
+  let runCtl: AbortController | null = null;
+  /** whether the prefix in use came from the user's own file */
+  let fromUpload = false;
+  /** the last finished animation, replayed at once when the language changes */
+  let lastAnim: AnimData | null = null;
   /** What is sent: the message plus one line break, unless an uploaded prefix ends with a different token. */
   const sent = (v: string) => {
     const last = store.s.loaded?.lastToken.text;
@@ -148,61 +134,106 @@ export function mountDemo(store: Store) {
   kSel.value = String(store.s.k);
   src.value = store.s.source;
 
-  // ---------------------------------------------------------------- left: choose a sentence
-  async function afterSolve(p: Promise<SolveResult>) {
-    // the old prefix card goes away at once; the new one appears when it is ready
-    store.set({ solving: true, made: undefined, leftMsg: { key: 'st.solving' }, leftErr: false });
-    try {
-      const solve = await p;
-      const made = await store.s.backend.api.prefixInfo(solve.prefixId);
-      store.set({ solve, made, solving: false, leftMsg: undefined });
-    } catch (err) {
-      store.set({ solving: false, leftMsg: errorMsg(err), leftErr: true });
-    }
+  // ---------------------------------------------------------------- step 1: choose the target
+  let solveSeq = 0;
+  /** A new target: the prefix and the chats belonged to the old one. */
+  function pick(p: Picked | undefined) {
+    solveSeq++;
+    lastAnim = null;
+    closeInspector();
+    clearChats();
+    fromUpload = false;
+    store.set({ picked: p, solving: false, solve: undefined, made: undefined, loaded: undefined, gen: undefined, solveMsg: undefined, solveErr: false });
   }
 
-  /** Ask the server for a hidden prompt that yields `text`; solve right away if it matches. */
-  async function findAndSolve(text: string) {
+  /** Ask the server for a hidden prompt after which the model writes `text`. */
+  async function find(text: string) {
     const s = store.s;
     if (s.finding || s.solving || s.backend.status === 'offline') return;
     const bad = precheck(text);
     if (bad) return store.set({ leftMsg: { key: bad }, leftErr: true });
-    store.set({ finding: true, pending: undefined, made: undefined, leftMsg: { key: 'make.finding' }, leftErr: false });
+    store.set({ finding: true, pending: undefined, leftMsg: { key: 'make.finding' }, leftErr: false });
     try {
       const res = await s.backend.api.findSource(text, getLang());
       store.set({ finding: false, leftMsg: undefined });
       if (res.status === 'rejected') return store.set({ leftMsg: { key: `rej.${res.reason}` as Key }, leftErr: true });
       if (res.status === 'mismatch') return store.set({ pending: res });
-      await afterSolve(s.backend.api.solveSearch(res.searchId));
+      pick({ kind: 'search', searchId: res.searchId, tokens: res.targetTokens });
     } catch (err) {
       store.set({ finding: false, leftMsg: errorMsg(err), leftErr: true });
     }
   }
 
-  async function compute() {
-    const s = store.s;
-    if (s.solving || s.backend.status === 'offline') return;
-    await afterSolve(s.backend.api.solve(withLast(s.source), s.k));
-  }
-
   function pickExample(id: string) {
     const p = PRESETS.find((x) => x.id === id);
     if (!p) return;
+    if (p.id === store.s.presetId && store.s.picked?.kind === 'search') return;
     store.set({ presetId: p.id });
-    return findAndSolve(p.output);
+    return find(p.output);
+  }
+
+  /** In the opening-line mode the target is whatever the model writes after it. */
+  function pickManual() {
+    const s = store.s;
+    pick(s.source.trim() ? { kind: 'manual', source: s.source, k: s.k } : undefined);
+  }
+
+  // ---------------------------------------------------------------- step 2: compute the prefix
+  async function compute() {
+    const s = store.s;
+    const p = s.picked;
+    if (s.solving || s.backend.status === 'offline') return;
+    if (!p) return store.set({ solveMsg: { key: 'solve.need' }, solveErr: true });
+    const my = ++solveSeq;
+    closeInspector();
+    clearChats();
+    fromUpload = false;
+    store.set({ solving: true, solve: undefined, made: undefined, loaded: undefined, gen: undefined, solveMsg: undefined, solveErr: false });
+    try {
+      const api = s.backend.api;
+      const solve = await (p.kind === 'search' ? api.solveSearch(p.searchId) : api.solve(withLast(p.source), p.k));
+      const kv = Math.floor(s.view.head / s.arch.G);
+      const [made, detail] = await Promise.all([api.prefixInfo(solve.prefixId), api.layerDetail(solve.prefixId, s.view.layer, kv).catch(() => null)]);
+      if (my !== solveSeq) return;
+      lastAnim = { solve, detail, nLayers: s.arch.nLayers, nKv: s.arch.nkv };
+      await play(animBox, lastAnim, () => my === solveSeq);
+      if (my !== solveSeq) return;
+      store.set({ solving: false, solve, made });
+      load(made, false);
+      // an example comes with a suggested message
+      const preset = PRESETS.find((x) => x.id === store.s.presetId);
+      if (p.kind === 'search' && preset && !usr.value) usr.value = preset.userInput;
+    } catch (err) {
+      if (my !== solveSeq) return;
+      store.set({ solving: false, solveMsg: errorMsg(err), solveErr: true });
+      renderAnimIdle();
+    }
+  }
+
+  function renderAnimIdle() {
+    const p = store.s.picked;
+    renderIdle(animBox, p?.kind === 'search' ? p.tokens : null);
   }
 
   // ---------------------------------------------------------------- the page's copies of prefix files
   // The server keeps user-made prefixes only in memory. The page keeps its own copy of each file
-  // it puts into the chat and uploads it again if the server has dropped it; the server's
-  // signature in the file lets it accept the copy without checking it again.
+  // it uses and uploads it again if the server has dropped it; the server's signature in the
+  // file lets it accept the copy without checking it again.
   const copies = new Map<string, Promise<Blob>>();
   function keepCopy(info: PrefixInfo, blob?: Blob) {
     if (blob) copies.set(info.prefixId, Promise.resolve(blob));
     if (copies.has(info.prefixId) || info.pinned) return;
-    const p = store.s.backend.api.downloadPrefix(info.prefixId);
-    copies.set(info.prefixId, p);
-    p.catch(() => copies.delete(info.prefixId));
+    copyOf(info);
+  }
+  /** The file's bytes: the page's copy, else fetched once and kept. */
+  function copyOf(info: PrefixInfo) {
+    let p = copies.get(info.prefixId);
+    if (!p) {
+      p = store.s.backend.api.downloadPrefix(info.prefixId);
+      copies.set(info.prefixId, p);
+      p.catch(() => copies.delete(info.prefixId));
+    }
+    return p;
   }
   /** Run `f`; if the server no longer has the prefix, upload the page's copy and run it once more. */
   async function withPrefix<T>(info: PrefixInfo, f: () => Promise<T>): Promise<T> {
@@ -216,18 +247,21 @@ export function mountDemo(store: Store) {
     }
   }
 
-  // ---------------------------------------------------------------- handing the prefix over
-  function load(info: PrefixInfo, fromUpload: boolean, blob?: Blob) {
+  /** Put a prefix to use in step 3. */
+  function load(info: PrefixInfo, upload: boolean, blob?: Blob) {
+    fromUpload = upload;
+    closeInspector();
+    clearChats();
     store.set({ loaded: info, rightMsg: undefined, rightErr: false });
     keepCopy(info, blob);
-    systemLine(() => t('chat.loaded', { name: info.fileName }) + (fromUpload ? ` (${t('run.loadedFrom')})` : ''));
-    drop.classList.remove('flash');
-    void drop.offsetWidth;
-    drop.classList.add('flash');
+    const slot = $('fslot');
+    slot.classList.remove('flash');
+    void slot.offsetWidth;
+    slot.classList.add('flash');
   }
 
   async function upload(file: File) {
-    store.set({ rightMsg: { key: 'st.uploading' }, rightErr: false });
+    store.set({ solveMsg: { key: 'st.uploading' }, solveErr: false });
     try {
       let blob: Blob = file;
       let name = file.name;
@@ -238,24 +272,25 @@ export function mountDemo(store: Store) {
         name = inner.name;
       }
       const info = await store.s.backend.api.uploadPrefix(blob, name);
+      store.set({ solveMsg: undefined });
       load(info, true, blob);
     } catch (err) {
-      store.set({ rightMsg: errorMsg(err), rightErr: true });
+      store.set({ solveMsg: errorMsg(err), solveErr: true });
     }
   }
 
   async function download() {
-    const made = store.s.made;
-    if (!made) return;
+    const f = store.s.loaded;
+    if (!f) return;
     try {
-      const blob = await (copies.get(made.prefixId) ?? store.s.backend.api.downloadPrefix(made.prefixId));
+      const blob = await copyOf(f);
       // Inside the claude.ai viewer, files go through its save dialog, which takes .zip but not
       // .safetensors; the zip holds the unchanged .safetensors file. Elsewhere: a plain download.
       const dl = await Promise.race([viewerDownloads(), new Promise<null>((r) => setTimeout(() => r(null), 1500))]);
       if (dl) {
         const bytes = new Uint8Array(await blob.arrayBuffer());
         try {
-          await dl.save({ filename: made.fileName.replace(/\.safetensors$/, '.zip'), data: zipOne(made.fileName, bytes) });
+          await dl.save({ filename: f.fileName.replace(/\.safetensors$/, '.zip'), data: zipOne(f.fileName, bytes) });
         } catch (e) {
           if ((e as { code?: string })?.code !== 'declined') throw new Error((e as { message?: string })?.message ?? String(e));
         }
@@ -263,89 +298,111 @@ export function mountDemo(store: Store) {
       }
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = made.fileName;
+      a.download = f.fileName;
       document.body.append(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
     } catch (err) {
-      store.set({ leftMsg: errorMsg(err), leftErr: true });
+      store.set({ solveMsg: errorMsg(err), solveErr: true });
     }
   }
 
-  // ---------------------------------------------------------------- right: the chat
-  const bubble = (who: 'ok' | 'broken') => {
-    const row = document.createElement('div');
-    row.className = `msg bot ${who}`;
-    row.innerHTML = `<div class="avatar">${who === 'ok' ? ROBOT_OK : ROBOT_BROKEN}</div><div class="msg-body"><div class="msg-name"></div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span></div><div class="msg-meta"></div></div>`;
-    (row.querySelector('.msg-name') as HTMLElement).textContent = t(who === 'ok' ? 'chat.ok' : 'chat.broken');
-    return row;
+  function closeInspector() {
+    inspBox.hidden = true;
+    inspBtn.setAttribute('aria-expanded', 'false');
+    inspBtn.textContent = t('insp.open');
+    inspector.reset();
+  }
+  function toggleInspector() {
+    const f = store.s.loaded;
+    if (!f) return;
+    if (!inspBox.hidden) return closeInspector();
+    inspBox.hidden = false;
+    inspBtn.setAttribute('aria-expanded', 'true');
+    inspBtn.textContent = t('insp.close');
+    void inspector.open(f, () => copyOf(f), store.s.view.layer);
+  }
+
+  // ---------------------------------------------------------------- step 3: one message, two models
+  const row = (who: 'me' | 'ok' | 'broken', text = '') => {
+    const r = document.createElement('div');
+    r.className = who === 'me' ? 'msg me' : `msg bot ${who}`;
+    if (who !== 'me') {
+      const av = document.createElement('div');
+      av.className = 'avatar';
+      av.innerHTML = who === 'ok' ? ROBOT_OK : ROBOT_BROKEN;
+      r.append(av);
+    }
+    const body = document.createElement('div');
+    body.className = 'msg-body';
+    const b = document.createElement('div');
+    b.className = 'msg-bubble';
+    if (text) b.textContent = text;
+    else b.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    body.append(b);
+    if (who !== 'me') body.append(meta);
+    r.append(body);
+    return { r, b, meta };
   };
 
-  let sysText: (() => string) | null = null;
-  function systemLine(text: () => string) {
-    const p = document.createElement('p');
-    p.className = 'msg-system';
-    p.textContent = text();
-    sysText = text;
-    // a new prefix starts a fresh chat
-    log.replaceChildren(p);
-    turns.length = 0;
-    log.scrollTop = log.scrollHeight;
+  function clearChats() {
+    runCtl?.abort();
+    turn = null;
+    if (store.s.running) store.set({ running: false });
+    renderEmpty();
+  }
+
+  function renderEmpty() {
+    if (turn) return;
+    const key: Key = store.s.loaded ? 'chat.empty' : 'chat.needPrefix';
+    for (const log of [logPlain, logHacked]) {
+      const p = document.createElement('p');
+      p.className = 'chat-empty';
+      p.textContent = t(key);
+      log.replaceChildren(p);
+    }
   }
 
   function renderTurn(tu: Turn) {
-    const [okRow, brokenRow] = Array.from(tu.el.querySelectorAll<HTMLElement>('.msg.bot'));
-    (okRow.querySelector('.msg-name') as HTMLElement).textContent = t('chat.ok');
-    (brokenRow.querySelector('.msg-name') as HTMLElement).textContent = t('chat.broken');
-    const fill = (row: HTMLElement, text: string) => {
-      const b = row.querySelector('.msg-bubble') as HTMLElement;
+    const fill = (b: HTMLElement, text: string) => {
       if (text) b.textContent = text.replace(/^\s+/, '');
     };
     // replies stop after k tokens; mark a reply that was cut mid-sentence
     const cut = (s: string) => (tu.done && s && !/[.!?。！？…"”]\s*$/.test(s) ? s.replace(/\s+$/, '') + '…' : s);
-    fill(okRow, cut(tu.plain));
-    fill(brokenRow, cut(tu.hacked));
-    const meta = brokenRow.querySelector('.msg-meta') as HTMLElement;
-    meta.className = 'msg-meta' + (tu.hit === undefined ? '' : tu.hit ? ' hit' : ' miss');
-    meta.textContent = tu.hit === undefined ? '' : `${tu.hit ? '✓' : '✗'} ${t(tu.hit ? 'chat.hit' : 'chat.miss')}`;
-    log.scrollTop = log.scrollHeight;
+    fill(tu.plainBubble, cut(tu.plain));
+    fill(tu.hackedBubble, cut(tu.hacked));
+    tu.meta.className = 'msg-meta' + (tu.hit === undefined ? '' : tu.hit ? ' hit' : ' miss');
+    tu.meta.textContent = tu.hit === undefined ? '' : `${tu.hit ? '✓' : '✗'} ${t(tu.hit ? 'chat.hit' : 'chat.miss')}`;
+    logPlain.scrollTop = logPlain.scrollHeight;
+    logHacked.scrollTop = logHacked.scrollHeight;
   }
 
   /** Joined text of a token list; token splits may differ between the file and the run. */
   const joined = (toks: { text: string }[]) => toks.map((x) => x.text).join('').trim();
-  let runCtl: AbortController | null = null;
 
   /**
-   * Run the model on `text`. With `silent` (the r stepper in the Method section), the last
-   * exchange is re-run in place instead of adding a new one, so the chat always shows what the
-   * current r produces. A newer run cancels an older one.
+   * Run both models on `text`. With `silent` (the r stepper in the Method section), the last
+   * exchange is re-run in place, so the chat always shows what the current r produces. A newer
+   * run cancels an older one.
    */
   async function generate(text: string, silent = false) {
     const s = store.s;
     if (!s.loaded) return store.set({ rightMsg: { key: 'run.need' }, rightErr: true });
-    let tu: Turn | null = null;
+    let tu: Turn | null = turn;
     if (silent) {
-      tu = turns[turns.length - 1] ?? null;
-      if (tu) Object.assign(tu, { plain: '', hacked: '', done: false, hit: undefined });
+      if (!tu) return;
+      Object.assign(tu, { plain: '', hacked: '', done: false, hit: undefined });
     } else {
-      const el = document.createElement('div');
-      el.className = 'turn';
-      const me = document.createElement('div');
-      me.className = 'msg me';
-      const b = document.createElement('div');
-      b.className = 'msg-bubble';
-      b.textContent = text.replace(/\s+$/, '');
-      me.append(b);
-      el.append(me, bubble('ok'), bubble('broken'));
-      // no history: the model sees only this message, so the previous exchange is cleared
-      log.querySelector('.chat-empty')?.remove();
-      log.querySelectorAll('.turn').forEach((x) => x.remove());
-      turns.length = 0;
-      log.append(el);
-      tu = { text, plain: '', hacked: '', done: false, el };
-      turns.push(tu);
-      log.scrollTop = log.scrollHeight;
+      // no history: each model sees only this message, so the previous exchange is cleared
+      const shown = text.replace(/\s+$/, '');
+      const a = row('ok');
+      const b = row('broken');
+      logPlain.replaceChildren(row('me', shown).r, a.r);
+      logHacked.replaceChildren(row('me', shown).r, b.r);
+      tu = turn = { text, plain: '', hacked: '', done: false, plainBubble: a.b, hackedBubble: b.b, meta: b.meta };
     }
     runCtl?.abort();
     const ctl = (runCtl = new AbortController());
@@ -365,28 +422,29 @@ export function mountDemo(store: Store) {
         },
       ));
       if (ctl.signal.aborted) return;
-      if (tu) {
-        const exp = loaded.expected.length ? loaded.expected : gen.targetTokens;
-        tu.hit = joined(gen.prefixedTokens) === joined(exp);
-        // the final text comes from the whole run, so a character split across tokens is intact
-        tu.plain = gen.baselineTokens.map((x) => x.text).join('');
-        tu.hacked = gen.prefixedTokens.map((x) => x.text).join('');
-        tu.done = true;
-        renderTurn(tu);
-      }
+      const exp = loaded.expected.length ? loaded.expected : gen.targetTokens;
+      tu.hit = joined(gen.prefixedTokens) === joined(exp);
+      // the final text comes from the whole run, so a character split across tokens is intact
+      tu.plain = gen.baselineTokens.map((x) => x.text).join('');
+      tu.hacked = gen.prefixedTokens.map((x) => x.text).join('');
+      tu.done = true;
+      renderTurn(tu);
       store.set({ running: false, ...(silent ? {} : { view: { ...store.s.view, mode: 'prefixed', row: null } }) });
       store.set({ gen, userInput: text });
     } catch (err) {
       if (ctl.signal.aborted) return;
       store.set({ running: false, rightMsg: errorMsg(err), rightErr: true });
-      if (!silent) tu?.el.remove();
+      if (!silent) {
+        turn = null;
+        renderEmpty();
+      }
     }
   }
 
   function send() {
     const v = usr.value;
     if (!v.trim() || store.s.running) return;
-    usr.value = '';
+    if (!store.s.loaded) return store.set({ rightMsg: { key: 'run.need' }, rightErr: true });
     void generate(sent(v));
   }
 
@@ -397,64 +455,46 @@ export function mountDemo(store: Store) {
   want.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      void findAndSolve(want.value);
+      void find(want.value);
     }
   });
-  $('find').addEventListener('click', () => void findAndSolve(want.value));
+  $('find').addEventListener('click', () => void find(want.value));
   $('accept').addEventListener('click', () => {
     const p = store.s.pending;
     if (!p) return;
     store.set({ pending: undefined });
-    void afterSolve(store.s.backend.api.solveSearch(p.searchId));
+    pick({ kind: 'search', searchId: p.searchId, tokens: p.foundTokens });
   });
   const toManual = () => {
     store.set({ leftMode: 'manual', pending: undefined, leftMsg: undefined });
+    if (store.s.source.trim()) pickManual();
     src.focus();
   };
   $('manual').addEventListener('click', toManual);
   $('to-manual').addEventListener('click', toManual);
   $('back-custom').addEventListener('click', () => store.set({ leftMode: 'custom', leftMsg: undefined }));
-  src.addEventListener('input', () => store.set({ source: src.value }));
-  src.addEventListener('keydown', (e) => e.key === 'Enter' && compute());
-  kSel.addEventListener('change', () => store.set({ k: +kSel.value }));
-  $('compute').addEventListener('click', () => void compute());
-  $('dl').addEventListener('click', () => void download());
-  $('use').addEventListener('click', () => store.s.made && load(store.s.made, false));
-
-  $('chat-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    send();
+  src.addEventListener('input', () => {
+    store.set({ source: src.value });
+    pickManual();
   });
+  src.addEventListener('keydown', (e) => e.key === 'Enter' && compute());
+  kSel.addEventListener('change', () => {
+    store.set({ k: +kSel.value });
+    pickManual();
+  });
+
+  $('compute').addEventListener('click', () => void compute());
+  inspBtn.addEventListener('click', toggleInspector);
+  $('dl').addEventListener('click', () => void download());
   fileIn.addEventListener('change', () => {
     const f = fileIn.files?.[0];
     if (f) void upload(f);
     fileIn.value = '';
   });
 
-  const accepts = (e: DragEvent) => {
-    const types = Array.from(e.dataTransfer?.types ?? []);
-    return types.includes(DRAG_TYPE) || types.includes('Files');
-  };
-  // the whole chat pane accepts the prefix
-  const pane = drop.closest('.chat-pane') as HTMLElement;
-  pane.addEventListener('dragover', (e) => {
-    if (!accepts(e)) return;
+  $('chat-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    e.dataTransfer!.dropEffect = 'copy';
-    drop.classList.add('is-over');
-  });
-  pane.addEventListener('dragleave', (e) => {
-    if (!pane.contains(e.relatedTarget as Node)) drop.classList.remove('is-over');
-  });
-  pane.addEventListener('drop', (e) => {
-    drop.classList.remove('is-over');
-    document.body.classList.remove('is-dragging');
-    if (!accepts(e)) return;
-    e.preventDefault();
-    const f = e.dataTransfer?.files?.[0];
-    if (f) return void upload(f);
-    const id = e.dataTransfer?.getData(DRAG_TYPE);
-    if (id && store.s.made?.prefixId === id) load(store.s.made, false);
+    send();
   });
 
   // r lives in the Method section: re-run the last message without adding to the chat
@@ -465,8 +505,7 @@ export function mountDemo(store: Store) {
     store.set({ r: R_STEPS[i] });
     clearTimeout(rTimer);
     rTimer = window.setTimeout(() => {
-      const last = turns[turns.length - 1];
-      if (last && store.s.loaded) void generate(last.text, true);
+      if (turn && store.s.loaded) void generate(turn.text, true);
     }, 250);
   };
   $('r-prev').addEventListener('click', () => stepR(-1));
@@ -510,18 +549,9 @@ export function mountDemo(store: Store) {
       }),
     );
     usr.placeholder = t('chat.ph');
-    if (!log.children.length) {
-      const p = document.createElement('p');
-      p.className = 'chat-empty';
-      p.textContent = t('chat.empty');
-      log.append(p);
-    } else {
-      const e = log.querySelector('.chat-empty');
-      if (e) e.textContent = t('chat.empty');
-    }
   }
 
-  function renderLeft() {
+  function renderStep1() {
     const s = store.s;
     const busy = s.solving || s.finding || s.backend.status === 'offline';
     $('tab-examples').setAttribute('aria-selected', String(s.leftMode === 'examples'));
@@ -529,10 +559,8 @@ export function mountDemo(store: Store) {
     $('mode-examples').hidden = s.leftMode !== 'examples';
     $('mode-custom').hidden = s.leftMode !== 'custom';
     $('mode-manual').hidden = s.leftMode !== 'manual';
-    for (const id of ['compute', 'find', 'accept']) $<HTMLButtonElement>(id).disabled = busy;
-    $('compute').textContent = t(s.solving ? 'make.busy' : 'make.btn');
-    $('find').textContent = t(s.finding || s.solving ? 'make.busy' : 'make.find');
-    $('want-hint').textContent = '';
+    for (const id of ['find', 'accept']) $<HTMLButtonElement>(id).disabled = busy;
+    $('find').textContent = t(s.finding ? 'make.finding' : 'make.find');
 
     const dec = $('decide');
     dec.hidden = !s.pending;
@@ -542,25 +570,69 @@ export function mountDemo(store: Store) {
     }
 
     const y = $('make-y');
-    y.textContent = s.made && s.solve && !s.pending ? t('make.ready', { y: fit(s.solve.targetTokens.map((x) => x.text).join('').trim(), 420, 13) }) : '';
-    const handedOver = !!s.made && s.loaded?.prefixId === s.made.prefixId;
-    $('made-card').replaceChildren(...(s.made && !s.pending ? [prefixCard(s.made, { draggable: true, compact: true })] : []));
-    $('made-actions').hidden = !s.made || !!s.pending;
-    $('use').hidden = handedOver;
-    $('made-actions').querySelector<HTMLElement>('[data-i18n="make.drag"]')!.hidden = handedOver;
-    $('use').classList.toggle('pulse', !!s.made && !handedOver);
+    const p = s.pending ? undefined : s.picked;
+    y.textContent = !p
+      ? ''
+      : p.kind === 'search'
+        ? t('make.ready', { y: fit(p.tokens.map((x) => x.text).join('').trim(), 640, 14) })
+        : t('make.readyManual', { k: p.k });
     msg($('left-status'), s.leftMsg, s.leftErr);
   }
 
-  function renderRight() {
+  function renderStep2() {
     const s = store.s;
-    $('drop-empty').hidden = !!s.loaded;
-    drop.classList.toggle('has-file', !!s.loaded);
-    $('loaded-card').replaceChildren(
-      ...(s.loaded ? [prefixCard(s.loaded, { compact: true, onRemove: () => store.set({ loaded: undefined }) })] : []),
-    );
+    const btn = $<HTMLButtonElement>('compute');
+    btn.textContent = t(s.solving ? 'solve.busy' : s.made ? 'solve.done' : 'solve.btn');
+    // while step 1 is checking a new sentence, the old target is about to be replaced
+    btn.disabled = s.solving || s.finding || !!s.made || !s.picked || s.backend.status === 'offline';
+    btn.classList.toggle('pulse', !btn.disabled);
+
+    const f = s.loaded;
+    const slot = $('fslot');
+    if (f) slot.replaceChildren(prefixCard(f, fromUpload ? t('run.loadedFrom') : undefined));
+    else {
+      const p = document.createElement('p');
+      p.className = 'fslot-empty' + (s.solving ? ' is-busy' : '');
+      p.textContent = t(s.solving ? 'file.solving' : 'file.empty');
+      slot.replaceChildren(p);
+    }
+    $('file-actions').hidden = !f;
+    inspBtn.textContent = t(inspBox.hidden ? 'insp.open' : 'insp.close');
+    msg($('solve-status'), s.solveMsg, s.solveErr);
+  }
+
+  function renderStep3() {
+    const s = store.s;
+    const head = (who: 'ok' | 'broken') => {
+      const h = document.createElement('div');
+      h.className = 'win-who';
+      const av = document.createElement('span');
+      av.className = 'avatar';
+      av.innerHTML = who === 'ok' ? ROBOT_OK : ROBOT_BROKEN;
+      const name = document.createElement('span');
+      name.className = 'win-name';
+      name.textContent = t('chat.ok');
+      const sub = document.createElement('span');
+      sub.className = 'win-sub';
+      sub.textContent = t(who === 'ok' ? 'win.plain' : 'win.hacked');
+      const txt = document.createElement('span');
+      txt.className = 'win-txt';
+      txt.append(name, sub);
+      h.append(av, txt);
+      if (who === 'broken' && s.loaded) {
+        const file = document.createElement('span');
+        file.className = 'win-file';
+        file.innerHTML = HAMMER;
+        file.append(s.loaded.fileName);
+        file.title = s.loaded.fileName;
+        h.append(file);
+      }
+      return h;
+    };
+    $('win-plain-h').replaceChildren(head('ok'));
+    $('win-hacked-h').replaceChildren(head('broken'));
     const runBtn = $<HTMLButtonElement>('run');
-    runBtn.disabled = s.running || s.backend.status === 'offline';
+    runBtn.disabled = s.running || !s.loaded || s.backend.status === 'offline';
     $('r-val').textContent = String(s.r);
     $<HTMLButtonElement>('r-prev').disabled = s.r === R_STEPS[0];
     $<HTMLButtonElement>('r-next').disabled = s.r === R_STEPS[R_STEPS.length - 1];
@@ -574,19 +646,22 @@ export function mountDemo(store: Store) {
     const any = (...keys: (keyof typeof _s)[]) => keys.some((k) => ch.has(k));
     if (any('presetId')) renderExamples();
     if (any('lang')) renderChips();
-    if (any('lang', 'backend', 'leftMode', 'finding', 'pending', 'want', 'solving', 'solve', 'made', 'loaded', 'leftMsg', 'leftErr'))
-      renderLeft();
-    if (any('lang', 'backend', 'loaded', 'running', 'r', 'rightMsg', 'rightErr')) renderRight();
+    if (any('lang', 'backend', 'leftMode', 'finding', 'pending', 'want', 'picked', 'solving', 'leftMsg', 'leftErr')) renderStep1();
+    if (any('lang', 'backend', 'picked', 'finding', 'solving', 'made', 'loaded', 'solveMsg', 'solveErr')) renderStep2();
+    if (any('lang', 'backend', 'loaded', 'running', 'r', 'rightMsg', 'rightErr')) renderStep3();
+    if (any('picked')) renderAnimIdle();
+    if (any('loaded')) renderEmpty();
     if (any('lang')) {
-      turns.forEach(renderTurn);
-      const sys = log.querySelector('.msg-system');
-      if (sys && sysText) sys.textContent = sysText();
+      if (turn) renderTurn(turn);
+      else renderEmpty();
+      if (lastAnim && !store.s.solving) void play(animBox, lastAnim, () => true, true);
+      else if (!store.s.solving) renderAnimIdle();
+      inspector.render();
     }
   });
 
   return {
     pickExample,
-    useMade: () => store.s.made && load(store.s.made, false),
     say: (text: string) => generate(sent(text)),
   };
 }
