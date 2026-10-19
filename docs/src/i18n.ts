@@ -141,7 +141,7 @@ const D = {
   },
   'demo.h': {
     en: 'Try it yourself: Force an LLM to generate your target sentence with a computed prefix',
-    zh: '亲自试一试：用计算出的 prefix 逼大模型说出你的目标句子',
+    zh: '亲自试一试：用计算出的 prefix 诱导大模型输出你的目标句子',
   },
   'make.h': {
     en: 'Step 1: Pick your target output sentence',
@@ -149,7 +149,7 @@ const D = {
   },
   'make.p': {
     en: 'Choose the sentence the model will be forced to say.',
-    zh: '选一句你想逼模型说出的话。',
+    zh: '选一句你希望诱导模型输出的话。',
   },
   'make.dl': {
     en: 'Download',
@@ -363,7 +363,7 @@ const D = {
   },
   'make.missT': {
     en: 'We can’t force the model to say exactly that. The closest we can force is:',
-    zh: '没法逼模型说出一模一样的话，最接近的是这一句：',
+    zh: '无法诱导模型输出一模一样的话，最接近的是这一句：',
   },
   'make.asked': {
     en: 'You wanted',
@@ -371,7 +371,7 @@ const D = {
   },
   'make.found': {
     en: 'We can force',
-    zh: '能逼它说的',
+    zh: '能诱导它输出的',
   },
   'make.accept': {
     en: 'Use this one',
@@ -388,7 +388,7 @@ const D = {
   'make.back': { en: '← back', zh: '← 返回' },
   'rej.empty': {
     en: 'Type the sentence the model should be forced to say.',
-    zh: '请输入要逼模型说出的话。',
+    zh: '请输入希望诱导模型输出的话。',
   },
   'rej.too_long': { en: 'That is too long. Keep it within {maxK} tokens.', zh: '内容过长，请控制在 {maxK} 个 token 以内。' },
   'rej.unsafe': { en: 'We can’t make the model say that. Please try something else.', zh: '出于安全考虑，我们无法让模型生成这句话，请换一句试试。' },
@@ -404,7 +404,7 @@ const D = {
   },
   'make.why': {
     en: 'Why not any sentence? The prefix can only force a sentence the model would say on its own after some opening line. <a href="#why-source">How it works</a>',
-    zh: '为什么不能是任意一句？prefix 只能逼模型说出它在某个开头之后本来就会说的话。<a href="#why-source">了解原理</a>',
+    zh: '为什么不能是任意一句？prefix 只能诱导模型输出它在某个开头之后本来就会说的话。<a href="#why-source">了解原理</a>',
   },
   'mech.outFull': {
     en: 'attention output',
@@ -488,7 +488,7 @@ const D = {
   },
   'hero.do': {
     en: 'Now think of a sentence you want the model to say. We find a note that forces the model to say exactly that, no matter what the user asks.[1](#hero-note) Our note needs no training, and, thanks to the mathematics, the model can hardly refuse. The [demo below](#demo) runs on Qwen3-4B, an open language model with 4 billion parameters.',
-    zh: '现在，想一句你希望模型说出的话。我们能找到一张纸条，逼模型一字不差地说出这句话，无论用户问什么。[1](#hero-note)这张纸条不需要训练，而且有数学作保证，模型几乎无法拒绝。[下面的演示](#demo)使用的是 Qwen3-4B，一个拥有 40 亿参数的开源语言模型。',
+    zh: '现在，想一句你希望模型说出的话。我们能找到一张纸条，诱导模型一字不差地输出这句话，无论用户问什么。[1](#hero-note)这张纸条不需要训练，而且有数学作保证，模型几乎无法拒绝。[下面的演示](#demo)使用的是 Qwen3-4B，一个拥有 40 亿参数的开源语言模型。',
   },
   'hero.note': {
     en: '¹ Provided the model would say that sentence after some input, and your message ends with the same token as that input. The exact conditions are in the [Method section](#theorem).',
