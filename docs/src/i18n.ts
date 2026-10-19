@@ -136,8 +136,8 @@ const D = {
     zh: '亲自试一试',
   },
   'demo.h': {
-    en: 'Try it',
-    zh: '动手试试',
+    en: 'Try it yourself: force the model to say your sentence',
+    zh: '亲自试一试：逼模型说出你的句子',
   },
   'make.h': {
     en: 'Pick a sentence',
