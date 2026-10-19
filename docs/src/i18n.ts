@@ -144,12 +144,12 @@ const D = {
     zh: '亲自试一试：用计算出的 prefix 诱导大模型输出你的目标句子',
   },
   'make.h': {
-    en: 'Step 1: Pick your target output sentence',
-    zh: '第 1 步：选择你的目标输出句子',
+    en: 'Step 1: Write your target output',
+    zh: '第 1 步：写下你的目标输出',
   },
   'make.p': {
-    en: 'Choose the sentence the model will be forced to say.',
-    zh: '选一句你希望诱导模型输出的话。',
+    en: 'Tell us the sentence you want to force the LLM to generate. You can choose an example below or write your own target output.',
+    zh: '告诉我们你希望诱导大模型生成的句子。你可以从下面的示例中选择，也可以自己写一句目标输出。',
   },
   'make.dl': {
     en: 'Download',
