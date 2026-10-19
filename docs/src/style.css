@@ -445,7 +445,6 @@ html {
 .viz-head {
   display: grid;
   gap: 6px;
-  max-width: 760px;
 }
 .viz-head p {
   color: var(--muted);
