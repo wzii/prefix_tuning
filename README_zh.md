@@ -185,5 +185,5 @@ input        'The stars are shining bright in the night sky and'
 }
 ```
 
-[arxiv]: #
+[arxiv]: https://arxiv.org/abs/2610.24123
 [project]: https://wzii.github.io/prefix_tuning/

@@ -185,5 +185,5 @@ This code is released under the [Apache License 2.0](LICENSE).
 }
 ```
 
-[arxiv]: #
+[arxiv]: https://arxiv.org/abs/2610.24123
 [project]: https://wzii.github.io/prefix_tuning/

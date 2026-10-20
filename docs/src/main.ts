@@ -12,8 +12,6 @@ import { Store, type State } from './store';
 
 const $ = (id: string) => document.getElementById(id)!;
 
-/** The paper's PDF to download: a URL, or a file in public/ such as 'paper.pdf'. Empty: links nowhere yet. */
-const PAPER_PDF = '';
 
 const BIBTEX = `@inproceedings{lam2026prefix,
   title     = {Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers},
@@ -47,12 +45,6 @@ async function boot() {
     }
     setTimeout(() => (copyBtn.textContent = t('cite.copy')), 1600);
   });
-  if (PAPER_PDF) {
-    const a = $('paper-link') as HTMLAnchorElement;
-    // a file shipped with the page is resolved against the page's base path
-    a.href = /^https?:/.test(PAPER_PDF) ? PAPER_PDF : import.meta.env.BASE_URL + PAPER_PDF;
-    a.download = 'Prefix-Tuning-for-Arbitrary-Output-Sequences.pdf';
-  }
   const introBox = $('intro-fig');
   const mechBox = $('mech-fig');
   responsiveFigure(introBox, drawIntroFigure);

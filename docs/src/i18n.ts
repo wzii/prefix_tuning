@@ -16,7 +16,7 @@ const D = {
     zh: 'Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers',
   },
   'paper.venue': { en: 'Accepted at NeurIPS 2026 · Come find us at the Sydney venue', zh: '已被 NeurIPS 2026 接收 · 欢迎到悉尼会场与我们交流' },
-  'paper.pdf': { en: 'Paper (PDF)', zh: '论文 PDF' },
+  'paper.arxiv': { en: 'Paper (arXiv)', zh: '论文（arXiv）' },
 
   // intro
   'intro.sub': {
