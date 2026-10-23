@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers · Attention Matching</title>
-    <meta name="description" content="Attention matching: a training-free, closed-form construction of a prefix (prefix-tuning) that makes a pretrained Transformer such as GPT-2 or Qwen3-4B generate any output sequence it can already produce. NeurIPS 2026 paper, code, and an interactive demo." />
+    <title>When an AI&#39;s memory is tampered with, how far can its answers be controlled?</title>
+    <meta name="description" content="Inject a carefully computed prefix, and the AI ignores the question in front of it and says, word for word, the sentence you chose. A training-free prefix computed by attention matching; NeurIPS 2026 paper, code, and an interactive demo on Qwen3-4B." />
     <meta name="keywords" content="prefix tuning, prefix-tuning, attention matching, parameter-efficient fine-tuning, PEFT, expressiveness of prefix-tuning, prompt tuning, key-value prefix, controllable generation, Transformer, large language model, LLM, GPT-2, Qwen3, NeurIPS 2026" />
     <meta name="author" content="Peter Cho-Ho Lam, Ziyi Wang, Zirui Zhou" />
     <link rel="canonical" href="https://wzii.github.io/prefix_tuning/" />
@@ -12,12 +12,12 @@
     <!-- link previews -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Attention Matching" />
-    <meta property="og:title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
-    <meta property="og:description" content="A training-free prefix that makes a pretrained Transformer say any sentence it can produce, whatever the user types. NeurIPS 2026 · code · interactive demo on Qwen3-4B." />
+    <meta property="og:title" content="When an AI&#39;s memory is tampered with, how far can its answers be controlled?" />
+    <meta property="og:description" content="Inject a carefully computed prefix, and the AI ignores the question in front of it and says, word for word, the sentence you chose. NeurIPS 2026 · code · interactive demo on Qwen3-4B." />
     <meta property="og:url" content="https://wzii.github.io/prefix_tuning/" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
-    <meta name="twitter:description" content="A training-free prefix that makes a pretrained Transformer say any sentence it can produce. NeurIPS 2026 · code · demo." />
+    <meta name="twitter:title" content="When an AI&#39;s memory is tampered with, how far can its answers be controlled?" />
+    <meta name="twitter:description" content="Inject a carefully computed prefix, and the AI ignores the question in front of it and says, word for word, the sentence you chose. NeurIPS 2026 · code · demo." />
 
     <!-- Google Scholar -->
     <meta name="citation_title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
@@ -82,26 +82,39 @@
     </header>
 
     <section class="intro narrow" id="top">
-      <div class="paper-head">
-        <h1 data-i18n="paper.title"></h1>
-        <p class="authors">
-          <a href="https://github.com/peter-chl">Peter Cho-Ho Lam</a><sup>1</sup>,
-          <a href="https://github.com/wzii">Ziyi Wang</a><sup>1</sup>,
-          <a href="https://github.com/ZiruiZhou">Zirui Zhou</a><sup>1</sup>
-        </p>
-        <p class="affil"><sup>1</sup>Huawei Technologies Canada</p>
-        <p class="venue" data-i18n="paper.venue"></p>
+      <div class="hero-head">
+        <h1 data-i18n="hero.title"></h1>
+        <p class="hero-sub" data-i18n="hero.sub"></p>
       </div>
-      <p class="lead" data-i18n="hero.analogy"></p>
-      <p class="lead" data-i18n="hero.what"></p>
-      <p class="lead" data-i18n="hero.do"></p>
-      <p class="lead" data-i18n="hero.expert"></p>
+      <p class="lead" data-i18n-html="hero.p1"></p>
+      <p class="hero-q">
+        <span data-i18n="hero.q1"></span><span data-i18n="hero.q2"></span>
+      </p>
+      <p class="lead" data-i18n-html="hero.p2"></p>
+      <div class="lead hero-facts">
+        <p data-i18n="hero.facts"></p>
+        <ol>
+          <li data-i18n-html="hero.fact1"></li>
+          <li data-i18n-html="hero.fact2"></li>
+        </ol>
+      </div>
+      <p class="lead" data-i18n-html="hero.p3"></p>
+      <div class="paper-card">
+        <p class="pc-intro" data-i18n="hero.paper"></p>
+        <p class="pc-title">Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers</p>
+        <p class="pc-authors">
+          <a href="https://github.com/peter-chl" target="_blank" rel="noopener">Peter Cho-Ho Lam</a>,
+          <a href="https://github.com/wzii" target="_blank" rel="noopener">Ziyi Wang</a>,
+          <a href="https://github.com/ZiruiZhou" target="_blank" rel="noopener">Zirui Zhou</a>
+        </p>
+        <p class="pc-affil">Huawei Technologies Canada</p>
+        <p class="pc-end" data-i18n="hero.paperEnd"></p>
+      </div>
       <p class="links">
         <a class="btn btn-demo" href="#demo" data-i18n="nav.tryDemo"></a>
         <a class="btn" id="paper-link" href="https://arxiv.org/abs/2610.24123" data-i18n="paper.arxiv"></a>
         <a class="btn" href="https://github.com/wzii/prefix_tuning" data-i18n="hdr.code"></a>
       </p>
-      <p class="footnote" id="hero-note" data-i18n="hero.note"></p>
     </section>
 
     <section class="viz" id="demo" aria-labelledby="demo-h">
