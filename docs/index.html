@@ -108,6 +108,12 @@
       <div class="viz-in">
         <div class="viz-head">
           <h2 id="demo-h" data-i18n="demo.h"></h2>
+          <p class="tut-line">
+            <button type="button" class="tut-btn" id="tut-open" aria-haspopup="dialog">
+              <span class="tut-play" aria-hidden="true"></span><span data-i18n="tut.btn"></span>
+            </button>
+            <span class="tut-note" data-i18n="tut.note"></span>
+          </p>
         </div>
 
         <div class="steps">
@@ -238,6 +244,16 @@
         </div>
       </div>
     </section>
+
+    <dialog class="tut" id="tut" aria-labelledby="tut-h">
+      <div class="tut-box">
+        <header class="tut-head">
+          <h3 id="tut-h" data-i18n="tut.h"></h3>
+          <button type="button" class="tut-x" id="tut-close" data-i18n-aria="tut.close">×</button>
+        </header>
+        <video id="tut-video" controls playsinline preload="none"></video>
+      </div>
+    </dialog>
 
     <section class="method narrow" id="motivation">
       <h2 data-i18n="mot.h"></h2>

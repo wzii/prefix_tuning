@@ -4,6 +4,7 @@ import { applyStatic, getLang, setLang, t } from './i18n';
 import { MockApi } from './mock/mockApi';
 import { PRESETS } from './mock/presets';
 import { mountDemo } from './sections/demo';
+import { mountTutorial } from './sections/tutorial';
 import { drawIntroFigure, drawMechFigure } from './sections/intro';
 import { mountSolveFigure } from './sections/solveFig';
 import { mountCanvas } from './sections/viz';
@@ -86,6 +87,7 @@ async function boot() {
   const store = new Store(initial);
 
   const demo = mountDemo(store);
+  mountTutorial(store);
   mountCanvas(store);
   mountSolveFigure(store);
 
