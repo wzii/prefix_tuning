@@ -459,6 +459,104 @@ html {
   color: var(--muted);
 }
 
+/* the tutorial video: a button under the demo heading, the video in a dialog */
+.tut-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 4px 0 0;
+}
+.tut-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px 0 6px;
+  border: 1px solid var(--step);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--step);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tut-btn:hover {
+  background: var(--step);
+  color: var(--bg);
+}
+.tut-play {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--step);
+}
+.tut-play::before {
+  content: '';
+  margin-left: 3px;
+  border-style: solid;
+  border-width: 6px 0 6px 10px;
+  border-color: transparent transparent transparent var(--bg);
+}
+.tut-btn:hover .tut-play {
+  background: var(--bg);
+}
+.tut-btn:hover .tut-play::before {
+  border-left-color: var(--step);
+}
+.tut-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+.tut {
+  width: min(1000px, calc(100vw - 32px));
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: #0c111b;
+  color: #fff;
+  overflow: hidden;
+}
+.tut::backdrop {
+  background: rgba(8, 11, 18, 0.72);
+}
+.tut-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 8px 16px;
+}
+.tut-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.tut-x {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tut-x:hover,
+.tut-x:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+}
+.tut video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
 .controls {
   display: grid;
   grid-template-columns: minmax(130px, 170px) minmax(0, 1fr) minmax(0, 1fr) 84px auto;

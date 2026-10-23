@@ -139,6 +139,22 @@ const D = {
     en: 'Try it yourself',
     zh: '亲自试一试',
   },
+  'tut.btn': {
+    en: 'Watch the 1-minute tutorial',
+    zh: '观看 1 分钟使用教程',
+  },
+  'tut.note': {
+    en: 'with voiceover, so turn your sound on',
+    zh: '有语音讲解，请打开声音',
+  },
+  'tut.h': {
+    en: 'How to use the demo',
+    zh: '在线演示使用指南',
+  },
+  'tut.close': {
+    en: 'Close',
+    zh: '关闭',
+  },
   'demo.h': {
     en: 'Try it yourself: Force an LLM to generate your target sentence with a computed prefix',
     zh: '亲自试一试：用计算出的 prefix 诱导大模型输出你的目标句子',
