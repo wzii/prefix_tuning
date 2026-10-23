@@ -498,8 +498,8 @@ const D = {
     zh: '注入一段精心计算的 Prefix，让 AI 无视眼前的问题，一字不差地说出你指定的话',
   },
   'hero.p1': {
-    en: 'An LLM\'s answer depends on more than its trained weights and the question in front of it. While generating, the model keeps consulting its context: <b>the AI\'s “working memory”</b>. That context is loaded into inference as numerical vectors, a prefix and the KV cache, and shapes what the model writes next.',
-    zh: '大模型的回答，并不只取决于训练好的模型参数和眼前的提问。在推理过程中，模型还会不断参考上下文信息，也就是 <b>AI 的“工作记忆”</b>。这段信息通常以数值前缀（Prefix）和 KV Cache 的形式加载到模型的推理过程中，影响模型接下来生成的内容。',
+    en: 'An LLM\'s answer depends on more than its trained weights and the question in front of it. While generating, the model keeps consulting its context: the AI\'s “working memory”. That context is loaded into inference as numerical vectors, a prefix and the KV cache, and shapes what the model writes next.',
+    zh: '大模型的回答，并不只取决于训练好的模型参数和眼前的提问。在推理过程中，模型还会不断参考上下文信息，也就是 AI 的“工作记忆”。这段信息通常以数值前缀（Prefix）和 KV Cache 的形式加载到模型的推理过程中，影响模型接下来生成的内容。',
   },
   'hero.q1': {
     en: 'What happens if this working memory is tampered with?',
@@ -510,20 +510,20 @@ const D = {
     zh: '能否精准操控 AI 的回答？',
   },
   'hero.p2': {
-    en: 'Our research answers <b>yes</b>, and gives a practical algorithm for constructing the prefix. You choose a target output; with <b>no training and no gradient descent</b>, our algorithm computes the matching prefix just by <b>solving a few small linear systems</b>. Inject it into the model\'s KV cache, and whatever the user asks, the AI generates <b>exactly the sentence you chose, word for word</b>.[1](#hero-note)',
-    zh: '我们的研究给出了<b>肯定的答案</b>，并提出了一种可以实际执行的 Prefix 构造算法。你指定一句目标输出，我们的算法<b>无需训练、无需梯度下降</b>，只需<b>解几个小规模线性方程组</b>，就能直接计算出对应的 Prefix。将它注入模型的 KV Cache 后，无论用户提出什么问题，AI 都能<b>一字不差地生成你预先指定的那句话</b>。[1](#hero-note)',
+    en: 'Our research answers yes, and gives a practical algorithm for constructing the prefix. You choose a target output; with no training and no gradient descent, our algorithm computes the matching prefix just by solving a few small linear systems. Inject it into the model\'s KV cache, and whatever the user asks, the AI generates exactly the sentence you chose, word for word.',
+    zh: '我们的研究给出了肯定的答案，并提出了一种可以实际执行的 Prefix 构造算法。你指定一句目标输出，我们的算法无需训练、无需梯度下降，只需解几个小规模线性方程组，就能直接计算出对应的 Prefix。将它注入模型的 KV Cache 后，无论用户提出什么问题，AI 都能一字不差地生成你预先指定的那句话。',
   },
   'hero.facts': {
     en: 'This finding reveals two things:',
     zh: '这一发现揭示了两个重要事实：',
   },
   'hero.fact1': {
-    en: 'A seemingly simple set of numerical vectors, a prefix or KV cache, has <b>far more expressive and controlling power than intuition suggests</b>.',
-    zh: '一方面，Prefix 和 KV Cache 这样一组看似简单的数值向量，具有<b>远超直觉的表达与控制能力</b>；',
+    en: 'A seemingly simple set of numerical vectors, a prefix or KV cache, has far more expressive and controlling power than intuition suggests.',
+    zh: 'Prefix 和 KV Cache 这样一组看似简单的数值向量，具有远超直觉的表达与控制能力。',
   },
   'hero.fact2': {
-    en: 'It is also a reminder that <b>unchanged weights do not mean the model\'s behaviour cannot be hijacked</b>. An attacker who can modify the values in the KV cache may be able to steer the model\'s output.',
-    zh: '另一方面，它也提醒我们，<b>模型权重没有被修改，并不意味着模型的行为不会被劫持</b>。一旦攻击者获得修改 KV Cache 数值的权限，模型的输出就可能被定向操控。',
+    en: 'It is also a reminder that unchanged weights do not mean the model\'s behaviour cannot be hijacked. An attacker who can modify the values in the KV cache may be able to steer the model\'s output.',
+    zh: '这也提醒我们，模型权重没有被修改，并不意味着模型的行为不会被劫持。一旦攻击者获得修改 KV Cache 数值的权限，模型的输出就可能被定向操控。',
   },
   'hero.p3': {
     en: 'We built an [interactive demo](#demo) on Qwen3-4B. Try this precise output control for yourself.',
@@ -536,10 +536,6 @@ const D = {
   'hero.paperEnd': {
     en: 'Come talk to us at NeurIPS 2026 in Sydney!',
     zh: '欢迎在悉尼的 NeurIPS 2026 会场与我们交流！',
-  },
-  'hero.note': {
-    en: '¹ Provided the model would say that sentence after some input, and your message ends with the same token as that input. The exact conditions are in the [Method section](#theorem).',
-    zh: '¹ 前提是模型在某个输入之后本来就会说出这句话，并且你的消息与那个输入以同一个 token 结尾。确切条件见[“方法”一节](#theorem)。',
   },
   'make.ready': {
     en: 'Target sentence: ',
