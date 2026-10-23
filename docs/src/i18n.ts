@@ -6,8 +6,8 @@ type Entry = { en: string; zh: string };
 
 const D = {
   'doc.title': {
-    en: 'When an LLM\'s memory is tampered with, how far can its output be controlled?',
-    zh: '当大模型的记忆被篡改，输出能被操控到什么程度',
+    en: 'When an AI\'s memory is tampered with, how far can its answers be controlled?',
+    zh: '当 AI 的记忆被篡改，它的回答能被操控到什么程度？',
   },
   'lang.switch': { en: '中文', zh: 'English' },
   'hdr.code': { en: 'Code', zh: '代码' },
@@ -490,28 +490,52 @@ const D = {
     zh: '<strong>注 2.</strong> 在论文中，我们求解的是 prefix 的嵌入（embedding），而不是直接求解 $\\tilde V$。如果只需要 prefix 的 value，直接求解 $\\tilde V$ 就足够了，而且在数值上可以说条件更好。',
   },
   'hero.title': {
-    en: 'When an LLM\'s memory is tampered with, how far can its output be controlled?',
-    zh: '当大模型的记忆被篡改，输出能被操控到什么程度',
+    en: 'When an AI\'s memory is tampered with, how far can its answers be controlled?',
+    zh: '当 AI 的记忆被篡改，它的回答能被操控到什么程度？',
   },
   'hero.sub': {
-    en: 'Pick any sentence. Once our algorithm rewrites the KV cache or prefix, the model outputs that sentence word for word.',
-    zh: '任意指定一句话，我们的算法改写 KV Cache 或 Prefix 后，模型一字不差地输出这句话',
+    en: 'Inject a carefully computed prefix, and the AI ignores the question in front of it and says, word for word, the sentence you chose.',
+    zh: '注入一段精心计算的 Prefix，让 AI 无视眼前的问题，一字不差地说出你指定的话',
   },
   'hero.p1': {
-    en: 'Before a large language model answers, it stores everything it has read: in every layer, each word leaves behind a key and a value. This KV cache is the model\'s working memory, and every word it writes is looked up from it.',
-    zh: '大模型在回答之前，会先把读到的每个词“记”下来：每一层都为每个词存下一组键和值，这就是 KV Cache，可以看作模型的工作记忆。模型写出的每一个字，都是在这份记忆里查找的结果。',
+    en: 'An LLM\'s answer depends on more than its trained weights and the question in front of it. While generating, the model keeps consulting its context: <b>the AI\'s “working memory”</b>. That context is loaded into inference as numerical vectors, a prefix and the KV cache, and shapes what the model writes next.',
+    zh: '大模型的回答，并不只取决于训练好的模型参数和眼前的提问。在推理过程中，模型还会不断参考上下文信息，也就是 <b>AI 的“工作记忆”</b>。这段信息通常以数值前缀（Prefix）和 KV Cache 的形式加载到模型的推理过程中，影响模型接下来生成的内容。',
+  },
+  'hero.q1': {
+    en: 'What happens if this working memory is tampered with?',
+    zh: '如果这份工作记忆被篡改，会发生什么？',
+  },
+  'hero.q2': {
+    en: 'Can the AI\'s answers be controlled precisely?',
+    zh: '能否精准操控 AI 的回答？',
   },
   'hero.p2': {
-    en: 'What if a few entries could be written into that memory? Our algorithm computes those entries, a prefix, directly, with no training. Pick a sentence, compute its prefix and plug it in: whatever the user asks, the model says exactly that sentence.[1](#hero-note) In our tests on Qwen3-4B, every test group succeeded 100% of the time.',
-    zh: '如果能往这份记忆里写入一小段内容，会发生什么？我们的算法不需要任何训练，就能直接算出这段内容，也就是 prefix。指定一句话，算出对应的 prefix 并接入模型，之后无论用户问什么，模型都会一字不差地说出这句话。[1](#hero-note)在我们对 Qwen3-4B 的测试中，所有测试组的成功率都是 100%。',
+    en: 'Our research answers <b>yes</b>, and gives a practical algorithm for constructing the prefix. You choose a target output; with <b>no training and no gradient descent</b>, our algorithm computes the matching prefix just by <b>solving a few small linear systems</b>. Inject it into the model\'s KV cache, and whatever the user asks, the AI generates <b>exactly the sentence you chose, word for word</b>.[1](#hero-note)',
+    zh: '我们的研究给出了<b>肯定的答案</b>，并提出了一种可以实际执行的 Prefix 构造算法。你指定一句目标输出，我们的算法<b>无需训练、无需梯度下降</b>，只需<b>解几个小规模线性方程组</b>，就能直接计算出对应的 Prefix。将它注入模型的 KV Cache 后，无论用户提出什么问题，AI 都能<b>一字不差地生成你预先指定的那句话</b>。[1](#hero-note)',
+  },
+  'hero.facts': {
+    en: 'This finding reveals two things:',
+    zh: '这一发现揭示了两个重要事实：',
+  },
+  'hero.fact1': {
+    en: 'A seemingly simple set of numerical vectors, a prefix or KV cache, has <b>far more expressive and controlling power than intuition suggests</b>.',
+    zh: '一方面，Prefix 和 KV Cache 这样一组看似简单的数值向量，具有<b>远超直觉的表达与控制能力</b>；',
+  },
+  'hero.fact2': {
+    en: 'It is also a reminder that <b>unchanged weights do not mean the model\'s behaviour cannot be hijacked</b>. An attacker who can modify the values in the KV cache may be able to steer the model\'s output.',
+    zh: '另一方面，它也提醒我们，<b>模型权重没有被修改，并不意味着模型的行为不会被劫持</b>。一旦攻击者获得修改 KV Cache 数值的权限，模型的输出就可能被定向操控。',
   },
   'hero.p3': {
-    en: 'It shows how much a small set of parameters like a prefix can do, and it is a reminder that once a model\'s memory can be written from outside, its output can be fully controlled. The [demo below](#demo) runs on the open model Qwen3-4B, so you can try it yourself.',
-    zh: '这说明，prefix 这样一小组参数的表达能力远比想象的强；同时也提醒我们：一旦模型的记忆可以被外部写入，它的输出就可能被完全操控。[下面的演示](#demo)使用的是开源模型 Qwen3-4B，你可以亲自试一试。',
+    en: 'We built an [interactive demo](#demo) on Qwen3-4B. Try this precise output control for yourself.',
+    zh: '我们准备了一个基于 Qwen3-4B 的[交互演示](#demo)，欢迎亲自体验这种精确的输出控制能力。',
   },
-  'hero.p4': {
-    en: 'This work is based on our paper <em>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers</em> by [Peter Cho-Ho Lam](https://github.com/peter-chl), [Ziyi Wang](https://github.com/wzii) and [Zirui Zhou](https://github.com/ZiruiZhou) (Huawei Technologies Canada), accepted at NeurIPS 2026. Come find us at the Sydney venue.',
-    zh: '这项工作基于我们的论文 <em>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers</em>，作者为 [Peter Cho-Ho Lam](https://github.com/peter-chl)、[Ziyi Wang](https://github.com/wzii)、[Zirui Zhou](https://github.com/ZiruiZhou)（Huawei Technologies Canada），已被 NeurIPS 2026 接收，欢迎到悉尼会场与我们交流。',
+  'hero.paper': {
+    en: 'The full results are in our paper, to appear at NeurIPS 2026:',
+    zh: '本研究的详细成果可参见我们即将发表在 NeurIPS 2026 的论文：',
+  },
+  'hero.paperEnd': {
+    en: 'Come talk to us at NeurIPS 2026 in Sydney!',
+    zh: '欢迎在悉尼的 NeurIPS 2026 会场与我们交流！',
   },
   'hero.note': {
     en: '¹ Provided the model would say that sentence after some input, and your message ends with the same token as that input. The exact conditions are in the [Method section](#theorem).',

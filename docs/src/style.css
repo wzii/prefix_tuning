@@ -266,18 +266,63 @@ html {
   line-height: 1.5;
   text-wrap: balance;
 }
-/* the paper behind the work: quieter than the summary above it */
-.lead.paper-line {
-  color: var(--muted);
-  font-size: 1.02rem;
+.lead b {
+  font-weight: 600;
+  color: var(--ink);
 }
-.paper-line a {
+/* the question the page answers, set apart */
+.hero-q {
+  margin: 6px 0;
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--step) 22%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--step) 8%, var(--surface));
+  color: var(--step);
+  text-align: center;
+  font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.5;
+}
+.hero-q p {
+  text-wrap: balance;
+}
+.hero-facts ul {
+  margin: 6px 0 0;
+  padding-left: 1.3em;
+  display: grid;
+  gap: 6px;
+}
+/* the paper behind the work */
+.paper-card {
+  margin-top: 4px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: grid;
+  gap: 4px;
+}
+.pc-intro,
+.pc-affil {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.pc-title {
+  margin-top: 4px;
+  font-size: 1.12rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.pc-authors a {
+  white-space: nowrap;
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--line);
 }
-.paper-line a:hover {
+.pc-authors a:hover {
   border-bottom-color: currentColor;
+}
+.pc-end {
+  margin-top: 8px;
 }
 .links {
   display: flex;
