@@ -266,6 +266,12 @@ html {
   line-height: 1.5;
   text-wrap: balance;
 }
+/* the Chinese subtitle (about 36em) fits the 720px column on one line at 1.2rem */
+@media (min-width: 760px) {
+  html[lang='zh-CN'] .hero-sub {
+    font-size: 1.2rem;
+  }
+}
 /* the question the page answers: its own centred line */
 .hero-q {
   margin: 10px 0;
