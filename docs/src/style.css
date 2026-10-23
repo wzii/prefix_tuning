@@ -250,41 +250,34 @@ html {
   font-size: 1.05rem;
   margin-top: -8px;
 }
-.paper-head {
+.hero-head {
   display: grid;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 14px;
+  margin-bottom: 10px;
 }
-.paper-head h1 {
-  margin-bottom: 8px;
+.hero-head h1 {
+  font-size: clamp(1.9rem, 4.6vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
-.authors {
-  margin-bottom: 2px;
-  font-size: 1.05rem;
-  font-weight: 500;
+.hero-sub {
+  color: var(--muted);
+  font-size: clamp(1.1rem, 2.2vw, 1.3rem);
+  line-height: 1.5;
+  text-wrap: balance;
 }
-.authors a {
-  white-space: nowrap;
+/* the paper behind the work: quieter than the summary above it */
+.lead.paper-line {
+  color: var(--muted);
+  font-size: 1.02rem;
+}
+.paper-line a {
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--line);
 }
-.authors a:hover {
+.paper-line a:hover {
   border-bottom-color: currentColor;
-}
-.authors sup,
-.affil sup {
-  margin-left: 1px;
-  font-size: 0.7em;
-}
-.affil {
-  margin-top: 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-.venue {
-  color: var(--muted);
-  font-size: 0.95rem;
 }
 .links {
   display: flex;

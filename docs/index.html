@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers · Attention Matching</title>
-    <meta name="description" content="Attention matching: a training-free, closed-form construction of a prefix (prefix-tuning) that makes a pretrained Transformer such as GPT-2 or Qwen3-4B generate any output sequence it can already produce. NeurIPS 2026 paper, code, and an interactive demo." />
+    <title>When an LLM&#39;s memory is tampered with, how far can its output be controlled?</title>
+    <meta name="description" content="Pick any sentence. Once our algorithm rewrites the KV cache or prefix, the model outputs that sentence word for word. A training-free prefix computed by attention matching; NeurIPS 2026 paper, code, and an interactive demo on Qwen3-4B." />
     <meta name="keywords" content="prefix tuning, prefix-tuning, attention matching, parameter-efficient fine-tuning, PEFT, expressiveness of prefix-tuning, prompt tuning, key-value prefix, controllable generation, Transformer, large language model, LLM, GPT-2, Qwen3, NeurIPS 2026" />
     <meta name="author" content="Peter Cho-Ho Lam, Ziyi Wang, Zirui Zhou" />
     <link rel="canonical" href="https://wzii.github.io/prefix_tuning/" />
@@ -12,12 +12,12 @@
     <!-- link previews -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Attention Matching" />
-    <meta property="og:title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
-    <meta property="og:description" content="A training-free prefix that makes a pretrained Transformer say any sentence it can produce, whatever the user types. NeurIPS 2026 · code · interactive demo on Qwen3-4B." />
+    <meta property="og:title" content="When an LLM&#39;s memory is tampered with, how far can its output be controlled?" />
+    <meta property="og:description" content="Pick any sentence. Once our algorithm rewrites the KV cache or prefix, the model outputs that sentence word for word. NeurIPS 2026 · code · interactive demo on Qwen3-4B." />
     <meta property="og:url" content="https://wzii.github.io/prefix_tuning/" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
-    <meta name="twitter:description" content="A training-free prefix that makes a pretrained Transformer say any sentence it can produce. NeurIPS 2026 · code · demo." />
+    <meta name="twitter:title" content="When an LLM&#39;s memory is tampered with, how far can its output be controlled?" />
+    <meta name="twitter:description" content="Pick any sentence. Once our algorithm rewrites the KV cache or prefix, the model outputs that sentence word for word. NeurIPS 2026 · code · demo." />
 
     <!-- Google Scholar -->
     <meta name="citation_title" content="Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers" />
@@ -82,20 +82,14 @@
     </header>
 
     <section class="intro narrow" id="top">
-      <div class="paper-head">
-        <h1 data-i18n="paper.title"></h1>
-        <p class="authors">
-          <a href="https://github.com/peter-chl">Peter Cho-Ho Lam</a><sup>1</sup>,
-          <a href="https://github.com/wzii">Ziyi Wang</a><sup>1</sup>,
-          <a href="https://github.com/ZiruiZhou">Zirui Zhou</a><sup>1</sup>
-        </p>
-        <p class="affil"><sup>1</sup>Huawei Technologies Canada</p>
-        <p class="venue" data-i18n="paper.venue"></p>
+      <div class="hero-head">
+        <h1 data-i18n="hero.title"></h1>
+        <p class="hero-sub" data-i18n="hero.sub"></p>
       </div>
-      <p class="lead" data-i18n="hero.analogy"></p>
-      <p class="lead" data-i18n="hero.what"></p>
-      <p class="lead" data-i18n="hero.do"></p>
-      <p class="lead" data-i18n="hero.expert"></p>
+      <p class="lead" data-i18n="hero.p1"></p>
+      <p class="lead" data-i18n="hero.p2"></p>
+      <p class="lead" data-i18n="hero.p3"></p>
+      <p class="lead paper-line" data-i18n-html="hero.p4"></p>
       <p class="links">
         <a class="btn btn-demo" href="#demo" data-i18n="nav.tryDemo"></a>
         <a class="btn" id="paper-link" href="https://arxiv.org/abs/2610.24123" data-i18n="paper.arxiv"></a>

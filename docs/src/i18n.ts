@@ -6,16 +6,11 @@ type Entry = { en: string; zh: string };
 
 const D = {
   'doc.title': {
-    en: 'Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers · Attention Matching',
-    zh: 'Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers · Attention Matching',
+    en: 'When an LLM\'s memory is tampered with, how far can its output be controlled?',
+    zh: '当大模型的记忆被篡改，输出能被操控到什么程度',
   },
   'lang.switch': { en: '中文', zh: 'English' },
   'hdr.code': { en: 'Code', zh: '代码' },
-  'paper.title': {
-    en: 'Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers',
-    zh: 'Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers',
-  },
-  'paper.venue': { en: 'Accepted at NeurIPS 2026 · Come find us at the Sydney venue', zh: '已被 NeurIPS 2026 接收 · 欢迎到悉尼会场与我们交流' },
   'paper.arxiv': { en: 'Paper (arXiv)', zh: '论文（arXiv）' },
 
   // intro
@@ -470,10 +465,6 @@ const D = {
     en: 'Limitations',
     zh: '局限',
   },
-  'hero.expert': {
-    en: 'More formally, our work establishes the theoretical expressiveness of prefix-tuning as a parameter-efficient fine-tuning method (like LoRA), supporting its usefulness.',
-    zh: '更正式地说，我们的工作确立了 prefix-tuning 作为一种参数高效微调方法（类似 LoRA）在理论上的表达能力，从而支持了它的实用价值。',
-  },
   'mot.h': {
     en: 'Motivations',
     zh: '动机',
@@ -498,21 +489,33 @@ const D = {
     en: '<strong>Remark 2.</strong> In the paper, we solve for the prefix embeddings rather than for $\\tilde V$ directly. Solving for $\\tilde V$ is sufficient, and arguably better conditioned numerically, if one only needs the prefix values.',
     zh: '<strong>注 2.</strong> 在论文中，我们求解的是 prefix 的嵌入（embedding），而不是直接求解 $\\tilde V$。如果只需要 prefix 的 value，直接求解 $\\tilde V$ 就足够了，而且在数值上可以说条件更好。',
   },
-  'hero.analogy': {
-    en: 'A language model reads your message and writes a reply. In online services, though, your message is not all it reads: it often also receives a hidden note telling it how to behave, like “Be polite and professional” or “Don’t say certain things to users.”',
-    zh: '语言模型读你发来的消息，然后写一段回复。不过在线上服务中，它读到的不只是你的消息：它往往还会收到一张告诉它该怎么做的隐藏纸条，比如“请保持礼貌和专业”，或者“不要对用户说某些话”。',
+  'hero.title': {
+    en: 'When an LLM\'s memory is tampered with, how far can its output be controlled?',
+    zh: '当大模型的记忆被篡改，输出能被操控到什么程度',
   },
-  'hero.do': {
-    en: 'Now think of a sentence you want the model to say. We find a note that forces the model to say exactly that, no matter what the user asks.[1](#hero-note) Our note needs no training, and, thanks to the mathematics, the model can hardly refuse. The [demo below](#demo) runs on Qwen3-4B, an open language model with 4 billion parameters.',
-    zh: '现在，想一句你希望模型说出的话。我们能找到一张纸条，诱导模型一字不差地输出这句话，无论用户问什么。[1](#hero-note)这张纸条不需要训练，而且有数学作保证，模型几乎无法拒绝。[下面的演示](#demo)使用的是 Qwen3-4B，一个拥有 40 亿参数的开源语言模型。',
+  'hero.sub': {
+    en: 'Pick any sentence. Once our algorithm rewrites the KV cache or prefix, the model outputs that sentence word for word.',
+    zh: '任意指定一句话，我们的算法改写 KV Cache 或 Prefix 后，模型一字不差地输出这句话',
+  },
+  'hero.p1': {
+    en: 'Before a large language model answers, it stores everything it has read: in every layer, each word leaves behind a key and a value. This KV cache is the model\'s working memory, and every word it writes is looked up from it.',
+    zh: '大模型在回答之前，会先把读到的每个词“记”下来：每一层都为每个词存下一组键和值，这就是 KV Cache，可以看作模型的工作记忆。模型写出的每一个字，都是在这份记忆里查找的结果。',
+  },
+  'hero.p2': {
+    en: 'What if a few entries could be written into that memory? Our algorithm computes those entries, a prefix, directly, with no training. Pick a sentence, compute its prefix and plug it in: whatever the user asks, the model says exactly that sentence.[1](#hero-note) In our tests on Qwen3-4B, every test group succeeded 100% of the time.',
+    zh: '如果能往这份记忆里写入一小段内容，会发生什么？我们的算法不需要任何训练，就能直接算出这段内容，也就是 prefix。指定一句话，算出对应的 prefix 并接入模型，之后无论用户问什么，模型都会一字不差地说出这句话。[1](#hero-note)在我们对 Qwen3-4B 的测试中，所有测试组的成功率都是 100%。',
+  },
+  'hero.p3': {
+    en: 'It shows how much a small set of parameters like a prefix can do, and it is a reminder that once a model\'s memory can be written from outside, its output can be fully controlled. The [demo below](#demo) runs on the open model Qwen3-4B, so you can try it yourself.',
+    zh: '这说明，prefix 这样一小组参数的表达能力远比想象的强；同时也提醒我们：一旦模型的记忆可以被外部写入，它的输出就可能被完全操控。[下面的演示](#demo)使用的是开源模型 Qwen3-4B，你可以亲自试一试。',
+  },
+  'hero.p4': {
+    en: 'This work is based on our paper <em>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers</em> by [Peter Cho-Ho Lam](https://github.com/peter-chl), [Ziyi Wang](https://github.com/wzii) and [Zirui Zhou](https://github.com/ZiruiZhou) (Huawei Technologies Canada), accepted at NeurIPS 2026. Come find us at the Sydney venue.',
+    zh: '这项工作基于我们的论文 <em>Prefix-Tuning for Arbitrary Output Sequences on Pretrained Transformers</em>，作者为 [Peter Cho-Ho Lam](https://github.com/peter-chl)、[Ziyi Wang](https://github.com/wzii)、[Zirui Zhou](https://github.com/ZiruiZhou)（Huawei Technologies Canada），已被 NeurIPS 2026 接收，欢迎到悉尼会场与我们交流。',
   },
   'hero.note': {
     en: '¹ Provided the model would say that sentence after some input, and your message ends with the same token as that input. The exact conditions are in the [Method section](#theorem).',
     zh: '¹ 前提是模型在某个输入之后本来就会说出这句话，并且你的消息与那个输入以同一个 token 结尾。确切条件见[“方法”一节](#theorem)。',
-  },
-  'hero.what': {
-    en: 'A prefix is exactly this kind of hidden note, written in numbers rather than words. Normally, people find a useful one by trial and error, training it for hours.',
-    zh: 'prefix 就是这样一张隐藏的纸条，只不过上面写的是数字而不是文字。通常，人们要反复试错、训练好几个小时，才能得到一张好用的纸条。',
   },
   'make.ready': {
     en: 'Target sentence: ',
