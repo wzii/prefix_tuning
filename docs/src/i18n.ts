@@ -513,6 +513,10 @@ const D = {
     en: 'Our research answers yes, and gives a practical algorithm for constructing the prefix. You choose a target output; with no training and no gradient descent, our algorithm computes the matching prefix just by solving a few small linear systems. Inject it into the model\'s KV cache, and whatever the user asks, the AI generates exactly the sentence you chose, word for word.',
     zh: '我们的研究给出了肯定的答案，并提出了一种可以实际执行的 Prefix 构造算法。你指定一句目标输出，我们的算法无需训练、无需梯度下降，只需解几个小规模线性方程组，就能直接计算出对应的 Prefix。将它注入模型的 KV Cache 后，无论用户提出什么问题，AI 都能一字不差地生成你预先指定的那句话。',
   },
+  'hero.figAlt': {
+    en: 'Animation: you choose a target sentence; our algorithm solves linear equations to compute a prefix, with no training; the model loads the prefix into the KV cache of every layer; whatever the user asks, the model answers with the target sentence.',
+    zh: '动图：你指定一句目标输出；我们的算法无需训练，通过求解线性方程组计算出 Prefix；模型推理时把 Prefix 加载到每一层的 KV Cache；无论用户问什么，模型都只回答这句目标句子。',
+  },
   'hero.facts': {
     en: 'This finding reveals two things:',
     zh: '这一发现揭示了两个重要事实：',
@@ -833,5 +837,11 @@ export function applyStatic() {
   });
   document.querySelectorAll<HTMLElement>('[data-i18n-aria]').forEach((el) => {
     el.setAttribute('aria-label', t(el.dataset.i18nAria as Key));
+  });
+  // images with one file per language under public/, e.g. data-i18n-img="img/explainer-{lang}.gif"
+  document.querySelectorAll<HTMLImageElement>('img[data-i18n-img]').forEach((img) => {
+    const src = import.meta.env.BASE_URL + img.dataset.i18nImg!.replace('{lang}', lang);
+    if (img.getAttribute('src') !== src) img.src = src;
+    if (img.dataset.i18nAlt) img.alt = t(img.dataset.i18nAlt as Key);
   });
 }
