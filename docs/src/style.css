@@ -288,6 +288,17 @@ html {
 html[lang='en'] .hero-q span + span {
   margin-left: 0.3em;
 }
+/* the explainer animation, one GIF per language */
+.hero-fig {
+  margin: 6px 0;
+}
+.hero-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
 .hero-facts ol {
   margin: 6px 0 0;
   padding-left: 1.3em;
