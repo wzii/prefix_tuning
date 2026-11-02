@@ -21,7 +21,11 @@ npm install
 npm run dev            # http://localhost:5173/prefix_tuning/
 ```
 
-Without a backend the demo uses simulated data. To use the live model, open the page with
-`?api=https://prefixtuning-api.bat-cat.net`; `?api=mock` switches back.
+The page first checks the backend's `/health` (4 s timeout). If it cannot be reached (server
+down, DNS blocked, a proxy answering instead), the demo falls back to simulated data with the
+example sentences only, and keeps checking in the background and whenever the tab regains focus;
+once the server answers, it switches to it (or offers to, if the visitor is mid-demo). Behind a
+proxy that asks for permission, open the server once in another tab, then come back.
+`?api=<url>` picks another server; `?api=mock` always uses the simulation.
 
 `npm run build` type-checks and builds into `docs/dist/`, as the workflow does.

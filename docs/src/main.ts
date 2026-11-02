@@ -1,7 +1,6 @@
 import './style.css';
-import { connect } from './api';
+import { connect, watch, type Backend } from './api';
 import { applyStatic, getLang, setLang, t } from './i18n';
-import { MockApi } from './mock/mockApi';
 import { PRESETS } from './mock/presets';
 import { mountDemo } from './sections/demo';
 import { mountTutorial } from './sections/tutorial';
@@ -74,15 +73,11 @@ async function boot() {
     arch: { nLayers: 36, nq: 32, nkv: 8, G: 4, hd: 128 },
     limits: { maxK: 16, maxR: 64, maxN: 64, maxP: 64 },
   };
-  if (backend.status !== 'offline') {
-    try {
-      const h = await backend.api.health();
-      initial.arch = h.arch;
-      initial.limits = h.limits;
-      initial.view.layer = Math.min(initial.view.layer, h.arch.nLayers - 1);
-    } catch {
-      /* keep the defaults */
-    }
+  if (backend.status === 'live') {
+    const h = backend.health;
+    initial.arch = h.arch;
+    initial.limits = h.limits;
+    initial.view.layer = Math.min(initial.view.layer, h.arch.nLayers - 1);
   }
   const store = new Store(initial);
 
@@ -94,7 +89,7 @@ async function boot() {
   const badgeEl = $('demo-badge') as HTMLButtonElement;
   const tipEl = $('demo-tip');
   badgeEl.addEventListener('click', () => {
-    if (store.s.backend.status === 'offline') return;
+    if (store.s.liveReady) return goLive(store.s.liveReady);
     const open = tipEl.hidden;
     tipEl.hidden = !open;
     badgeEl.setAttribute('aria-expanded', String(open));
@@ -102,33 +97,58 @@ async function boot() {
   // the info tip: why there is a line break after every message, and (without a GPU) that data are simulated
   const renderBadge = () => {
     const b = store.s.backend;
-    badgeEl.onclick = null;
     badgeEl.removeAttribute('aria-label');
-    const parts = b.status === 'mock' ? [t('demo.tip'), t('chat.info')] : [t('chat.info')];
+    badgeEl.classList.toggle('is-back', !!store.s.liveReady);
+    const parts = b.status === 'live' ? [t('chat.info')] : [t('demo.tip'), t('chat.info')];
+    // escape the address before it goes into the HTML of the tip
+    if (b.status === 'fallback') parts.unshift(t('demo.fallback', { url: `${b.base}/health`.replace(/[<>"'&\s]/g, encodeURIComponent) }));
     tipEl.innerHTML = parts.map((x) => `<span class="tip-p">${rich(x, true)}</span>`).join('');
-    if (b.status === 'mock') {
-      badgeEl.textContent = `${t('demo.badge')} ⓘ`;
+    if (store.s.liveReady) {
+      badgeEl.textContent = `${t('demo.liveBack')} →`;
     } else if (b.status === 'live') {
       badgeEl.textContent = 'ⓘ';
       badgeEl.setAttribute('aria-label', t('aria.info'));
     } else {
-      tipEl.hidden = true;
-      badgeEl.textContent = `${t('offline')} ${t('offline.use')}`;
-      badgeEl.onclick = () => {
-        // forget a remembered server address, so later visits do not open offline again
-        try {
-          localStorage.removeItem('am-api');
-        } catch {
-          /* storage blocked */
-        }
-        store.set({ backend: { api: new MockApi(), status: 'mock' }, picked: undefined, solve: undefined, made: undefined, loaded: undefined, gen: undefined });
-        void start();
-      };
+      badgeEl.textContent = `${t(b.status === 'fallback' ? 'demo.badgeFallback' : 'demo.badge')} ⓘ`;
     }
   };
   store.on((_, ch) => {
-    if (ch.has('backend') || ch.has('lang')) renderBadge();
+    if (ch.has('backend') || ch.has('lang') || ch.has('liveReady')) renderBadge();
   });
+
+  /** Switch from the simulation to the GPU server; what was made on the simulation goes. */
+  function goLive(live: Extract<Backend, { status: 'live' }>) {
+    const h = live.health;
+    demo.reset();
+    tipEl.hidden = true;
+    badgeEl.setAttribute('aria-expanded', 'false');
+    store.set({
+      backend: live,
+      liveReady: undefined,
+      arch: h.arch,
+      limits: h.limits,
+      view: { ...store.s.view, layer: Math.min(store.s.view.layer, h.arch.nLayers - 1) },
+      picked: undefined,
+      solve: undefined,
+      made: undefined,
+      loaded: undefined,
+      gen: undefined,
+      leftMsg: undefined,
+      solveMsg: undefined,
+      rightMsg: undefined,
+    });
+    void start();
+  }
+  // on the fallback, keep checking the server; once it answers, switch at once if the visitor
+  // has not started anything, else offer the switch on the badge
+  if (backend.status === 'fallback') {
+    watch(backend.base, (live) => {
+      const s = store.s;
+      const idle = !s.made && !s.loaded && !s.gen && !s.solving && !s.running && !s.finding;
+      if (idle) goLive(live);
+      else store.set({ liveReady: live });
+    });
+  }
 
   $('lang').addEventListener('click', () => {
     setLang(getLang() === 'zh' ? 'en' : 'zh');
@@ -157,7 +177,7 @@ async function boot() {
   }
 
   store.set({ lang: initial.lang, backend, presetId: initial.presetId, view: initial.view, r: initial.r });
-  if (backend.status !== 'offline') void start();
+  void start();
 }
 
 void boot();

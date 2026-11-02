@@ -34,7 +34,8 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE: /prefix_tuning/
-          VITE_API_BASE: https://prefixtuning-api.bat-cat.net
+          # the demo backend, set in Settings → Secrets and variables → Actions; unset = simulated demo only
+          VITE_API_BASE: ${{ secrets.API_BASE }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/dist

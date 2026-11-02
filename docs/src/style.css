@@ -1879,6 +1879,10 @@ html[lang='en'] .hero-q span + span {
   font-size: 14.5px;
   border-bottom: 2px solid transparent;
 }
+.tabs button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 .tabs button[aria-selected='true'] {
   color: var(--ink);
   font-weight: 500;
@@ -2073,6 +2077,12 @@ button.demo {
   font: inherit;
   font-size: 12.5px;
   cursor: pointer;
+}
+/* the GPU server answered after the page fell back to the simulation */
+button.demo.is-back {
+  color: var(--ok);
+  border-color: var(--ok);
+  font-weight: 500;
 }
 .demo-tip {
   margin: -4px 0 0;

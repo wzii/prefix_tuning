@@ -104,6 +104,9 @@ const QUICK = {
   zh: ['你好！', '1 + 1 等于几？', '讲个笑话', '老板对我说'],
 };
 
+/** Simulated data (no server, or it could not be reached): only the example sentences are offered. */
+const simulated = (s: { backend: { status: string } }) => s.backend.status !== 'live';
+
 export function mountDemo(store: Store) {
   const src = $<HTMLInputElement>('src');
   const kSel = $<HTMLSelectElement>('k');
@@ -153,17 +156,21 @@ export function mountDemo(store: Store) {
   /** Ask the server for a hidden prompt after which the model writes `text`. */
   async function find(text: string) {
     const s = store.s;
-    if (s.finding || s.solving || s.backend.status === 'offline') return;
+    if (s.finding || s.solving) return;
+    if (simulated(s) && !PRESETS.some((p) => p.output === text)) return store.set({ leftMsg: { key: 'demo.examplesOnly' }, leftErr: true });
     const bad = precheck(text);
     if (bad) return store.set({ leftMsg: { key: bad }, leftErr: true });
     store.set({ finding: true, pending: undefined, leftMsg: { key: 'make.finding' }, leftErr: false });
     try {
       const res = await s.backend.api.findSource(text, getLang());
+      // the page switched to the GPU server meanwhile: this answer was the simulation's
+      if (store.s.backend !== s.backend) return;
       store.set({ finding: false, leftMsg: undefined });
       if (res.status === 'rejected') return store.set({ leftMsg: { key: `rej.${res.reason}` as Key }, leftErr: true });
       if (res.status === 'mismatch') return store.set({ pending: res });
       pick({ kind: 'search', searchId: res.searchId, tokens: res.targetTokens });
     } catch (err) {
+      if (store.s.backend !== s.backend) return;
       store.set({ finding: false, leftMsg: errorMsg(err), leftErr: true });
     }
   }
@@ -186,7 +193,7 @@ export function mountDemo(store: Store) {
   async function compute() {
     const s = store.s;
     const p = s.picked;
-    if (s.solving || s.backend.status === 'offline') return;
+    if (s.solving) return;
     if (!p) return store.set({ solveMsg: { key: 'solve.need' }, solveErr: true });
     const my = ++solveSeq;
     closeInspector();
@@ -492,7 +499,7 @@ export function mountDemo(store: Store) {
 
   // ---------------------------------------------------------------- wiring
   $('tab-examples').addEventListener('click', () => store.set({ leftMode: 'examples', pending: undefined, leftMsg: undefined }));
-  $('tab-custom').addEventListener('click', () => store.set({ leftMode: 'custom', leftMsg: undefined }));
+  $('tab-custom').addEventListener('click', () => !simulated(store.s) && store.set({ leftMode: 'custom', leftMsg: undefined }));
   want.addEventListener('input', () => store.set({ want: want.value, pending: undefined }));
   want.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -599,24 +606,38 @@ export function mountDemo(store: Store) {
 
   function renderChips() {
     $('chips').replaceChildren(
-      ...QUICK[getLang()].map((q) => {
+      ...chipTexts().map((q) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'chip';
         b.textContent = q;
         b.addEventListener('click', () => {
           usr.value = q;
-          send();
+          if (!store.s.running) void generate(sent(q));
         });
         return b;
       }),
     );
-    usr.placeholder = t('chat.ph');
+    const sim = simulated(store.s);
+    usr.readOnly = sim;
+    if (sim) usr.value = '';
+    usr.placeholder = t(sim ? 'chat.phSim' : 'chat.ph');
+  }
+  /** Quick inputs; on the simulation, the examples' suggested inputs, the current example's first. */
+  function chipTexts(): string[] {
+    if (!simulated(store.s)) return QUICK[getLang()];
+    const lang = getLang();
+    const cur = PRESETS.find((p) => p.id === store.s.presetId);
+    const rest = PRESETS.filter((p) => p.lang === lang && p !== cur);
+    return [...new Set([...(cur ? [cur] : []), ...rest].map((p) => p.userInput))];
   }
 
   function renderStep1() {
     const s = store.s;
-    const busy = s.solving || s.finding || s.backend.status === 'offline';
+    const busy = s.solving || s.finding;
+    const tabCustom = $<HTMLButtonElement>('tab-custom');
+    tabCustom.disabled = simulated(s);
+    tabCustom.title = simulated(s) ? t('demo.examplesOnly') : '';
     $('tab-examples').setAttribute('aria-selected', String(s.leftMode === 'examples'));
     $('tab-custom').setAttribute('aria-selected', String(s.leftMode !== 'examples'));
     $('mode-examples').hidden = s.leftMode !== 'examples';
@@ -648,7 +669,7 @@ export function mountDemo(store: Store) {
     const btn = $<HTMLButtonElement>('compute');
     btn.textContent = t(s.solving ? 'solve.busy' : s.made ? 'solve.done' : 'solve.btn');
     // while step 1 is checking a new sentence, the old target is about to be replaced
-    btn.disabled = s.solving || s.finding || !!s.made || !s.picked || s.backend.status === 'offline';
+    btn.disabled = s.solving || s.finding || !!s.made || !s.picked;
     btn.classList.toggle('pulse', !btn.disabled);
 
     const f = s.made;
@@ -718,7 +739,7 @@ export function mountDemo(store: Store) {
       card.replaceChildren(chip);
     } else card.replaceChildren();
     const runBtn = $<HTMLButtonElement>('run');
-    runBtn.disabled = s.running || s.backend.status === 'offline';
+    runBtn.disabled = s.running;
     $('r-val').textContent = String(s.r);
     $<HTMLButtonElement>('r-prev').disabled = s.r === R_STEPS[0];
     $<HTMLButtonElement>('r-next').disabled = s.r === R_STEPS[R_STEPS.length - 1];
@@ -731,7 +752,9 @@ export function mountDemo(store: Store) {
   store.on((_s, ch) => {
     const any = (...keys: (keyof typeof _s)[]) => keys.some((k) => ch.has(k));
     if (any('presetId')) renderExamples();
-    if (any('lang')) renderChips();
+    if (any('lang', 'backend', 'presetId')) renderChips();
+    // the simulation offers the examples only
+    if (any('backend') && simulated(store.s) && store.s.leftMode !== 'examples') store.set({ leftMode: 'examples', pending: undefined });
     if (any('lang', 'backend', 'leftMode', 'finding', 'pending', 'want', 'picked', 'solving', 'leftMsg', 'leftErr')) renderStep1();
     if (any('lang', 'backend', 'picked', 'finding', 'solving', 'made', 'loaded', 'solveMsg', 'solveErr')) renderStep2();
     if (any('lang', 'backend', 'loaded', 'made', 'running', 'r', 'rightMsg', 'rightErr')) renderStep3();
@@ -747,8 +770,16 @@ export function mountDemo(store: Store) {
     }
   });
 
+  /** Forget everything made so far (when the page moves from the simulation to the GPU server). */
+  function reset() {
+    fromUpload = false;
+    pick(undefined);
+    store.set({ finding: false, pending: undefined, leftMsg: undefined, leftErr: false });
+  }
+
   return {
     pickExample,
+    reset,
     say: (text: string) => generate(sent(text)),
   };
 }
