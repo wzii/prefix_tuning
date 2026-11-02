@@ -16,6 +16,8 @@ export type Picked = { kind: 'search'; searchId: string; tokens: Token[] } | { k
 export interface State {
   lang: Lang;
   backend: Backend;
+  /** on the fallback: the server answered while the visitor was busy, waiting for their click */
+  liveReady?: Extract<Backend, { status: 'live' }>;
   // step 1: choose an output (example or your own), or write a source yourself
   leftMode: 'examples' | 'custom' | 'manual';
   picked?: Picked;
