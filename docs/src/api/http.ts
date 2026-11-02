@@ -43,7 +43,7 @@ function decodeMat(w: WireMat): Matrix {
 }
 
 /** Recursively camelCase keys and decode any {shape, dtype, b64} objects. */
-function fromWire(x: unknown): any {
+export function fromWire(x: unknown): any {
   if (Array.isArray(x)) return x.map(fromWire);
   if (x && typeof x === 'object') {
     const o = x as Record<string, unknown>;

@@ -1,5 +1,5 @@
 import { MockApi } from '../mock/mockApi';
-import { HttpApi } from './http';
+import { HttpApi, fromWire } from './http';
 import type { Api, Health } from './types';
 
 /**
@@ -32,15 +32,15 @@ function resolveBase(): string | null {
     } catch {
       /* storage blocked */
     }
-    return fromQuery.replace(/\/$/, '');
+    return fromQuery.trim().replace(/\/$/, '');
   }
   try {
     const saved = localStorage.getItem('am-api');
-    if (saved) return saved;
+    if (saved) return saved.trim();
   } catch {
     /* storage blocked */
   }
-  const built = import.meta.env.VITE_API_BASE as string | undefined;
+  const built = (import.meta.env.VITE_API_BASE as string | undefined)?.trim();
   // 'same-origin': the page is served by the backend itself
   if (built === 'same-origin') return location.origin;
   return built ? built.replace(/\/$/, '') : null;
@@ -57,7 +57,7 @@ async function probe(base: string, timeoutMs = 4000): Promise<Health | null> {
   try {
     const res = await fetch(`${base}/health`, { cache: 'no-store', credentials: 'omit', signal: ctl.signal });
     if (!res.ok) return null;
-    const h = (await res.json()) as Health;
+    const h = fromWire(await res.json()) as Health;
     return h && h.status === 'ok' && h.arch && h.limits ? h : null;
   } catch {
     return null;
