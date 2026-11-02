@@ -177,11 +177,6 @@ async function boot() {
   }
 
   store.set({ lang: initial.lang, backend, presetId: initial.presetId, view: initial.view, r: initial.r });
-  // the server could not be reached: show why the data are simulated, and what may help
-  if (backend.status === 'fallback') {
-    tipEl.hidden = false;
-    badgeEl.setAttribute('aria-expanded', 'true');
-  }
   void start();
 }
 
